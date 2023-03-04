@@ -1,1415 +1,2319 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+  <head>
+    <title>YaMDb API</title>
+    <style type="text/css">
+      body {
+      	font-family: Trebuchet MS, sans-serif;
+      	font-size: 15px;
+      	color: #444;
+      	margin-right: 24px;
+      }
+      
+      h1	{
+      	font-size: 25px;
+      }
+      h2	{
+      	font-size: 20px;
+      }
+      h3	{
+      	font-size: 16px;
+      	font-weight: bold;
+      }
+      hr	{
+      	height: 1px;
+      	border: 0;
+      	color: #ddd;
+      	background-color: #ddd;
+      }
+      
+      .app-desc {
+        clear: both;
+        margin-left: 20px;
+      }
+      .param-name {
+        width: 100%;
+      }
+      .license-info {
+        margin-left: 20px;
+      }
+      
+      .license-url {
+        margin-left: 20px;
+      }
+      
+      .model {
+        margin: 0 0 0px 20px;
+      }
+      
+      .method {
+        margin-left: 20px;
+      }
+      
+      .method-notes	{
+      	margin: 10px 0 20px 0;
+      	font-size: 90%;
+      	color: #555;
+      }
+      
+      pre {
+        padding: 10px;
+        margin-bottom: 2px;
+      }
+      
+      .http-method {
+       text-transform: uppercase;
+      }
+      
+      pre.get {
+        background-color: #0f6ab4;
+      }
+      
+      pre.post {
+        background-color: #10a54a;
+      }
+      
+      pre.put {
+        background-color: #c5862b;
+      }
+      
+      pre.delete {
+        background-color: #a41e22;
+      }
+      
+      .huge	{
+      	color: #fff;
+      }
+      
+      pre.example {
+        background-color: #f3f3f3;
+        padding: 10px;
+        border: 1px solid #ddd;
+      }
+      
+      code {
+        white-space: pre;
+      }
+      
+      .nickname {
+        font-weight: bold;
+      }
+      
+      .method-path {
+        font-size: 1.5em;
+        background-color: #0f6ab4;
+      }
+      
+      .up {
+        float:right;
+      }
+      
+      .parameter {
+        width: 500px;
+      }
+      
+      .param {
+        width: 500px;
+        padding: 10px 0 0 20px;
+        font-weight: bold;
+      }
+      
+      .param-desc {
+        width: 700px;
+        padding: 0 0 0 20px;
+        color: #777;
+      }
+      
+      .param-type {
+        font-style: italic;
+      }
+      
+      .param-enum-header {
+      width: 700px;
+      padding: 0 0 0 60px;
+      color: #777;
+      font-weight: bold;
+      }
+      
+      .param-enum {
+      width: 700px;
+      padding: 0 0 0 80px;
+      color: #777;
+      font-style: italic;
+      }
+      
+      .field-label {
+        padding: 0;
+        margin: 0;
+        clear: both;
+      }
+      
+      .field-items	{
+      	padding: 0 0 15px 0;
+      	margin-bottom: 15px;
+      }
+      
+      .return-type {
+        clear: both;
+        padding-bottom: 10px;
+      }
+      
+      .param-header {
+        font-weight: bold;
+      }
+      
+      .method-tags {
+        text-align: right;
+      }
+      
+      .method-tag {
+        background: none repeat scroll 0% 0% #24A600;
+        border-radius: 3px;
+        padding: 2px 10px;
+        margin: 2px;
+        color: #FFF;
+        display: inline-block;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+  <h1>YaMDb API</h1>
+    <div class="app-desc"><p>запросы к API начинаются с <code>/api/v1/</code></p>
+<h1>Описание</h1>
+<p>Проект <strong>YaMDb</strong> собирает отзывы пользователей на различные произведения.</p>
+<h1>Алгоритм регистрации пользователей</h1>
+<ol>
+<li>Пользователь отправляет POST-запрос на добавление нового пользователя с параметрами <code>email</code> и <code>username</code> на эндпоинт <code>/api/v1/auth/signup/</code>.</li>
+<li><strong>YaMDB</strong> отправляет письмо с кодом подтверждения (<code>confirmation_code</code>) на адрес  <code>email</code>.</li>
+<li>Пользователь отправляет POST-запрос с параметрами <code>username</code> и <code>confirmation_code</code> на эндпоинт <code>/api/v1/auth/token/</code>, в ответе на запрос ему приходит <code>token</code> (JWT-токен).</li>
+<li>При желании пользователь отправляет PATCH-запрос на эндпоинт <code>/api/v1/users/me/</code> и заполняет поля в своём профайле (описание полей — в документации).</li>
+</ol>
+<h1>Пользовательские роли</h1>
+<ul>
+<li><strong>Аноним</strong> — может просматривать описания произведений, читать отзывы и комментарии.</li>
+<li><strong>Аутентифицированный пользователь</strong> (<code>user</code>) — может, как и <strong>Аноним</strong>, читать всё, дополнительно он может публиковать отзывы и ставить оценку произведениям (фильмам/книгам/песенкам), может комментировать чужие отзывы; может редактировать и удалять <strong>свои</strong> отзывы и комментарии. Эта роль присваивается по умолчанию каждому новому пользователю.</li>
+<li><strong>Модератор</strong> (<code>moderator</code>) — те же права, что и у <strong>Аутентифицированного пользователя</strong> плюс право удалять <strong>любые</strong> отзывы и комментарии.</li>
+<li><strong>Администратор</strong> (<code>admin</code>) — полные права на управление всем контентом проекта. Может создавать и удалять произведения, категории и жанры. Может назначать роли пользователям.</li>
+<li><strong>Суперюзер Django</strong> — обладет правами администратора (<code>admin</code>)</li>
+</ul>
+</div>
+    <div class="app-desc">More information: <a href="https://helloreverb.com">https://helloreverb.com</a></div>
+    <div class="app-desc">Contact Info: <a href="hello@helloreverb.com">hello@helloreverb.com</a></div>
+    
+    
+    <div class="license-info">All rights reserved</div>
+    <div class="license-url">http://apache.org/licenses/LICENSE-2.0.html</div>
+  <h2>Access</h2>
+    <ol>
+      <li>APIKey KeyParamName:Bearer KeyInQuery:false KeyInHeader:true</li>
+    </ol>
 
-<head>
-    <title>Beautifyconverter.com Yaml To HTML Converter</title>
-</head>
+  <h2><a name="__Methods">Methods</a></h2>
+  [ Jump to <a href="#__Models">Models</a> ]
 
-<body>
-    <table>
-        <tr>
-            <td>openapi</td>
-            <td>info.title</td>
-            <td>info.version</td>
-            <td>info.description</td>
-            <td>servers.0.url</td>
-            <td>tags.0.name</td>
-            <td>tags.0.description</td>
-            <td>tags.1.name</td>
-            <td>tags.1.description</td>
-            <td>tags.2.name</td>
-            <td>tags.2.description</td>
-            <td>tags.3.name</td>
-            <td>tags.3.description</td>
-            <td>tags.4.name</td>
-            <td>tags.4.description</td>
-            <td>tags.5.name</td>
-            <td>tags.5.description</td>
-            <td>tags.6.name</td>
-            <td>tags.6.description</td>
-            <td>paths./auth/signup/.post.tags.0</td>
-            <td>paths./auth/signup/.post.operationId</td>
-            <td>paths./auth/signup/.post.description</td>
-            <td>paths./auth/signup/.post.parameters</td>
-            <td>paths./auth/signup/.post.requestBody.content.application/json.schema.required.0</td>
-            <td>paths./auth/signup/.post.requestBody.content.application/json.schema.required.1</td>
-            <td>paths./auth/signup/.post.requestBody.content.application/json.schema.properties.email.type</td>
-            <td>paths./auth/signup/.post.requestBody.content.application/json.schema.properties.email.format</td>
-            <td>paths./auth/signup/.post.requestBody.content.application/json.schema.properties.email.maxLength</td>
-            <td>paths./auth/signup/.post.requestBody.content.application/json.schema.properties.username.type</td>
-            <td>paths./auth/signup/.post.requestBody.content.application/json.schema.properties.username.pattern</td>
-            <td>paths./auth/signup/.post.requestBody.content.application/json.schema.properties.username.maxLength</td>
-            <td>paths./auth/signup/.post.responses.200.content.application/json.schema.properties.email.type</td>
-            <td>paths./auth/signup/.post.responses.200.content.application/json.schema.properties.username.type</td>
-            <td>paths./auth/signup/.post.responses.200.description</td>
-            <td>paths./auth/signup/.post.responses.400.content.application/json.schema.$ref</td>
-            <td>paths./auth/signup/.post.responses.400.description</td>
-            <td>paths./auth/token/.post.tags.0</td>
-            <td>paths./auth/token/.post.operationId</td>
-            <td>paths./auth/token/.post.description</td>
-            <td>paths./auth/token/.post.requestBody.content.application/json.schema.required.0</td>
-            <td>paths./auth/token/.post.requestBody.content.application/json.schema.required.1</td>
-            <td>paths./auth/token/.post.requestBody.content.application/json.schema.properties.username.type</td>
-            <td>paths./auth/token/.post.requestBody.content.application/json.schema.properties.username.pattern</td>
-            <td>paths./auth/token/.post.requestBody.content.application/json.schema.properties.username.maxLength</td>
-            <td>paths./auth/token/.post.requestBody.content.application/json.schema.properties.confirmation_code.type</td>
-            <td>paths./auth/token/.post.requestBody.content.application/json.schema.properties.confirmation_code.writeOnly</td>
-            <td>paths./auth/token/.post.responses.200.content.application/json.schema.$ref</td>
-            <td>paths./auth/token/.post.responses.200.description</td>
-            <td>paths./auth/token/.post.responses.400.content.application/json.schema.$ref</td>
-            <td>paths./auth/token/.post.responses.400.description</td>
-            <td>paths./auth/token/.post.responses.404.description</td>
-            <td>paths./categories/.get.tags.0</td>
-            <td>paths./categories/.get.operationId</td>
-            <td>paths./categories/.get.description</td>
-            <td>paths./categories/.get.parameters.0.name</td>
-            <td>paths./categories/.get.parameters.0.in</td>
-            <td>paths./categories/.get.parameters.0.description</td>
-            <td>paths./categories/.get.parameters.0.schema.type</td>
-            <td>paths./categories/.get.responses.200.description</td>
-            <td>paths./categories/.get.responses.200.content.application/json.schema.type</td>
-            <td>paths./categories/.get.responses.200.content.application/json.schema.properties.count.type</td>
-            <td>paths./categories/.get.responses.200.content.application/json.schema.properties.next.type</td>
-            <td>paths./categories/.get.responses.200.content.application/json.schema.properties.previous.type</td>
-            <td>paths./categories/.get.responses.200.content.application/json.schema.properties.results.type</td>
-            <td>paths./categories/.get.responses.200.content.application/json.schema.properties.results.items.$ref</td>
-            <td>paths./categories/.post.tags.0</td>
-            <td>paths./categories/.post.operationId</td>
-            <td>paths./categories/.post.description</td>
-            <td>paths./categories/.post.requestBody.content.application/json.schema.$ref</td>
-            <td>paths./categories/.post.responses.201.description</td>
-            <td>paths./categories/.post.responses.201.content.application/json.schema.$ref</td>
-            <td>paths./categories/.post.responses.400.description</td>
-            <td>paths./categories/.post.responses.400.content.application/json.schema.$ref</td>
-            <td>paths./categories/.post.responses.401.description</td>
-            <td>paths./categories/.post.responses.403.description</td>
-            <td>paths./categories/.post.security.0.jwt-token.0</td>
-            <td>paths./categories/{slug}/.delete.tags.0</td>
-            <td>paths./categories/{slug}/.delete.operationId</td>
-            <td>paths./categories/{slug}/.delete.description</td>
-            <td>paths./categories/{slug}/.delete.parameters.0.name</td>
-            <td>paths./categories/{slug}/.delete.parameters.0.in</td>
-            <td>paths./categories/{slug}/.delete.parameters.0.required</td>
-            <td>paths./categories/{slug}/.delete.parameters.0.description</td>
-            <td>paths./categories/{slug}/.delete.parameters.0.schema.type</td>
-            <td>paths./categories/{slug}/.delete.responses.204.description</td>
-            <td>paths./categories/{slug}/.delete.responses.401.description</td>
-            <td>paths./categories/{slug}/.delete.responses.403.description</td>
-            <td>paths./categories/{slug}/.delete.responses.404.description</td>
-            <td>paths./categories/{slug}/.delete.security.0.jwt-token.0</td>
-            <td>paths./genres/.get.tags.0</td>
-            <td>paths./genres/.get.operationId</td>
-            <td>paths./genres/.get.description</td>
-            <td>paths./genres/.get.parameters.0.name</td>
-            <td>paths./genres/.get.parameters.0.in</td>
-            <td>paths./genres/.get.parameters.0.description</td>
-            <td>paths./genres/.get.parameters.0.schema.type</td>
-            <td>paths./genres/.get.responses.200.description</td>
-            <td>paths./genres/.get.responses.200.content.application/json.schema.type</td>
-            <td>paths./genres/.get.responses.200.content.application/json.schema.properties.count.type</td>
-            <td>paths./genres/.get.responses.200.content.application/json.schema.properties.next.type</td>
-            <td>paths./genres/.get.responses.200.content.application/json.schema.properties.previous.type</td>
-            <td>paths./genres/.get.responses.200.content.application/json.schema.properties.results.type</td>
-            <td>paths./genres/.get.responses.200.content.application/json.schema.properties.results.items.$ref</td>
-            <td>paths./genres/.post.tags.0</td>
-            <td>paths./genres/.post.operationId</td>
-            <td>paths./genres/.post.description</td>
-            <td>paths./genres/.post.requestBody.content.application/json.schema.$ref</td>
-            <td>paths./genres/.post.responses.201.description</td>
-            <td>paths./genres/.post.responses.201.content.application/json.schema.$ref</td>
-            <td>paths./genres/.post.responses.400.description</td>
-            <td>paths./genres/.post.responses.400.content.application/json.schema.$ref</td>
-            <td>paths./genres/.post.responses.401.description</td>
-            <td>paths./genres/.post.responses.403.description</td>
-            <td>paths./genres/.post.security.0.jwt-token.0</td>
-            <td>paths./genres/{slug}/.delete.tags.0</td>
-            <td>paths./genres/{slug}/.delete.operationId</td>
-            <td>paths./genres/{slug}/.delete.description</td>
-            <td>paths./genres/{slug}/.delete.parameters.0.name</td>
-            <td>paths./genres/{slug}/.delete.parameters.0.in</td>
-            <td>paths./genres/{slug}/.delete.parameters.0.required</td>
-            <td>paths./genres/{slug}/.delete.parameters.0.description</td>
-            <td>paths./genres/{slug}/.delete.parameters.0.schema.type</td>
-            <td>paths./genres/{slug}/.delete.responses.204.description</td>
-            <td>paths./genres/{slug}/.delete.responses.401.description</td>
-            <td>paths./genres/{slug}/.delete.responses.403.description</td>
-            <td>paths./genres/{slug}/.delete.responses.404.description</td>
-            <td>paths./genres/{slug}/.delete.security.0.jwt-token.0</td>
-            <td>paths./titles/.get.tags.0</td>
-            <td>paths./titles/.get.operationId</td>
-            <td>paths./titles/.get.description</td>
-            <td>paths./titles/.get.parameters.0.name</td>
-            <td>paths./titles/.get.parameters.0.in</td>
-            <td>paths./titles/.get.parameters.0.description</td>
-            <td>paths./titles/.get.parameters.0.schema.type</td>
-            <td>paths./titles/.get.parameters.1.name</td>
-            <td>paths./titles/.get.parameters.1.in</td>
-            <td>paths./titles/.get.parameters.1.description</td>
-            <td>paths./titles/.get.parameters.1.schema.type</td>
-            <td>paths./titles/.get.parameters.2.name</td>
-            <td>paths./titles/.get.parameters.2.in</td>
-            <td>paths./titles/.get.parameters.2.description</td>
-            <td>paths./titles/.get.parameters.2.schema.type</td>
-            <td>paths./titles/.get.parameters.3.name</td>
-            <td>paths./titles/.get.parameters.3.in</td>
-            <td>paths./titles/.get.parameters.3.description</td>
-            <td>paths./titles/.get.parameters.3.schema.type</td>
-            <td>paths./titles/.get.responses.200.description</td>
-            <td>paths./titles/.get.responses.200.content.application/json.schema.type</td>
-            <td>paths./titles/.get.responses.200.content.application/json.schema.properties.count.type</td>
-            <td>paths./titles/.get.responses.200.content.application/json.schema.properties.next.type</td>
-            <td>paths./titles/.get.responses.200.content.application/json.schema.properties.previous.type</td>
-            <td>paths./titles/.get.responses.200.content.application/json.schema.properties.results.type</td>
-            <td>paths./titles/.get.responses.200.content.application/json.schema.properties.results.items.$ref</td>
-            <td>paths./titles/.post.tags.0</td>
-            <td>paths./titles/.post.operationId</td>
-            <td>paths./titles/.post.description</td>
-            <td>paths./titles/.post.parameters</td>
-            <td>paths./titles/.post.requestBody.content.application/json.schema.$ref</td>
-            <td>paths./titles/.post.responses.201.description</td>
-            <td>paths./titles/.post.responses.201.content.application/json.schema.$ref</td>
-            <td>paths./titles/.post.responses.400.description</td>
-            <td>paths./titles/.post.responses.400.content.application/json.schema.$ref</td>
-            <td>paths./titles/.post.responses.401.description</td>
-            <td>paths./titles/.post.responses.403.description</td>
-            <td>paths./titles/.post.security.0.jwt-token.0</td>
-            <td>paths./titles/{titles_id}/.parameters.0.name</td>
-            <td>paths./titles/{titles_id}/.parameters.0.in</td>
-            <td>paths./titles/{titles_id}/.parameters.0.required</td>
-            <td>paths./titles/{titles_id}/.parameters.0.description</td>
-            <td>paths./titles/{titles_id}/.parameters.0.schema.type</td>
-            <td>paths./titles/{titles_id}/.get.tags.0</td>
-            <td>paths./titles/{titles_id}/.get.operationId</td>
-            <td>paths./titles/{titles_id}/.get.description</td>
-            <td>paths./titles/{titles_id}/.get.responses.200.description</td>
-            <td>paths./titles/{titles_id}/.get.responses.200.content.application/json.schema.$ref</td>
-            <td>paths./titles/{titles_id}/.get.responses.404.description</td>
-            <td>paths./titles/{titles_id}/.patch.tags.0</td>
-            <td>paths./titles/{titles_id}/.patch.operationId</td>
-            <td>paths./titles/{titles_id}/.patch.description</td>
-            <td>paths./titles/{titles_id}/.patch.requestBody.content.application/json.schema.$ref</td>
-            <td>paths./titles/{titles_id}/.patch.responses.200.description</td>
-            <td>paths./titles/{titles_id}/.patch.responses.200.content.application/json.schema.$ref</td>
-            <td>paths./titles/{titles_id}/.patch.responses.401.description</td>
-            <td>paths./titles/{titles_id}/.patch.responses.403.description</td>
-            <td>paths./titles/{titles_id}/.patch.responses.404.description</td>
-            <td>paths./titles/{titles_id}/.patch.security.0.jwt-token.0</td>
-            <td>paths./titles/{titles_id}/.delete.tags.0</td>
-            <td>paths./titles/{titles_id}/.delete.operationId</td>
-            <td>paths./titles/{titles_id}/.delete.description</td>
-            <td>paths./titles/{titles_id}/.delete.responses.204.description</td>
-            <td>paths./titles/{titles_id}/.delete.responses.401.description</td>
-            <td>paths./titles/{titles_id}/.delete.responses.403.description</td>
-            <td>paths./titles/{titles_id}/.delete.responses.404.description</td>
-            <td>paths./titles/{titles_id}/.delete.security.0.jwt-token.0</td>
-            <td>paths./titles/{title_id}/reviews/.parameters.0.name</td>
-            <td>paths./titles/{title_id}/reviews/.parameters.0.in</td>
-            <td>paths./titles/{title_id}/reviews/.parameters.0.required</td>
-            <td>paths./titles/{title_id}/reviews/.parameters.0.description</td>
-            <td>paths./titles/{title_id}/reviews/.parameters.0.schema.type</td>
-            <td>paths./titles/{title_id}/reviews/.get.tags.0</td>
-            <td>paths./titles/{title_id}/reviews/.get.operationId</td>
-            <td>paths./titles/{title_id}/reviews/.get.description</td>
-            <td>paths./titles/{title_id}/reviews/.get.responses.200.description</td>
-            <td>paths./titles/{title_id}/reviews/.get.responses.200.content.application/json.schema.type</td>
-            <td>paths./titles/{title_id}/reviews/.get.responses.200.content.application/json.schema.properties.count.type</td>
-            <td>paths./titles/{title_id}/reviews/.get.responses.200.content.application/json.schema.properties.next.type</td>
-            <td>paths./titles/{title_id}/reviews/.get.responses.200.content.application/json.schema.properties.previous.type</td>
-            <td>paths./titles/{title_id}/reviews/.get.responses.200.content.application/json.schema.properties.results.type</td>
-            <td>paths./titles/{title_id}/reviews/.get.responses.200.content.application/json.schema.properties.results.items.$ref</td>
-            <td>paths./titles/{title_id}/reviews/.get.responses.404.description</td>
-            <td>paths./titles/{title_id}/reviews/.post.tags.0</td>
-            <td>paths./titles/{title_id}/reviews/.post.operationId</td>
-            <td>paths./titles/{title_id}/reviews/.post.description</td>
-            <td>paths./titles/{title_id}/reviews/.post.requestBody.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/.post.responses.201.description</td>
-            <td>paths./titles/{title_id}/reviews/.post.responses.201.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/.post.responses.400.description</td>
-            <td>paths./titles/{title_id}/reviews/.post.responses.400.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/.post.responses.401.description</td>
-            <td>paths./titles/{title_id}/reviews/.post.responses.404.description</td>
-            <td>paths./titles/{title_id}/reviews/.post.security.0.jwt-token.0</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.parameters.0.name</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.parameters.0.in</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.parameters.0.required</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.parameters.0.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.parameters.0.schema.type</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.parameters.1.name</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.parameters.1.in</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.parameters.1.required</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.parameters.1.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.parameters.1.schema.type</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.get.tags.0</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.get.operationId</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.get.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.get.responses.200.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.get.responses.200.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.get.responses.404.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.patch.tags.0</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.patch.operationId</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.patch.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.patch.requestBody.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.patch.responses.200.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.patch.responses.200.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.patch.responses.400.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.patch.responses.400.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.patch.responses.401.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.patch.responses.403.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.patch.responses.404.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.patch.security.0.jwt-token.0</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.delete.tags.0</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.delete.operationId</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.delete.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.delete.responses.204.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.delete.responses.401.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.delete.responses.403.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.delete.responses.404.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/.delete.security.0.jwt-token.0</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.parameters.0.name</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.parameters.0.in</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.parameters.0.required</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.parameters.0.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.parameters.0.schema.type</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.parameters.1.name</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.parameters.1.in</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.parameters.1.required</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.parameters.1.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.parameters.1.schema.type</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.get.tags.0</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.get.operationId</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.get.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.get.responses.200.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.get.responses.200.content.application/json.schema.type</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.get.responses.200.content.application/json.schema.properties.count.type</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.get.responses.200.content.application/json.schema.properties.next.type</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.get.responses.200.content.application/json.schema.properties.previous.type</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.get.responses.200.content.application/json.schema.properties.results.type</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.get.responses.200.content.application/json.schema.properties.results.items.$ref</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.get.responses.404.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.post.tags.0</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.post.operationId</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.post.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.post.requestBody.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.post.responses.201.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.post.responses.201.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.post.responses.400.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.post.responses.400.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.post.responses.401.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.post.responses.404.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/.post.security.0.jwt-token.0</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.0.name</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.0.in</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.0.required</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.0.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.0.schema.type</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.1.name</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.1.in</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.1.required</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.1.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.1.schema.type</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.2.name</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.2.in</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.2.required</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.2.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.parameters.2.schema.type</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.get.tags.0</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.get.operationId</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.get.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.get.responses.200.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.get.responses.200.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.get.responses.404.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.patch.tags.0</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.patch.operationId</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.patch.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.patch.requestBody.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.patch.responses.200.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.patch.responses.200.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.patch.responses.400.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.patch.responses.400.content.application/json.schema.$ref</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.patch.responses.401.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.patch.responses.403.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.patch.responses.404.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.patch.security.0.jwt-token.0</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.delete.tags.0</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.delete.operationId</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.delete.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.delete.responses.204.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.delete.responses.401.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.delete.responses.403.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.delete.responses.404.description</td>
-            <td>paths./titles/{title_id}/reviews/{review_id}/comments/{comment_id}/.delete.security.0.jwt-token.0</td>
-            <td>paths./users/.get.tags.0</td>
-            <td>paths./users/.get.operationId</td>
-            <td>paths./users/.get.description</td>
-            <td>paths./users/.get.parameters.0.name</td>
-            <td>paths./users/.get.parameters.0.in</td>
-            <td>paths./users/.get.parameters.0.description</td>
-            <td>paths./users/.get.parameters.0.schema.type</td>
-            <td>paths./users/.get.responses.200.description</td>
-            <td>paths./users/.get.responses.200.content.application/json.schema.type</td>
-            <td>paths./users/.get.responses.200.content.application/json.schema.properties.count.type</td>
-            <td>paths./users/.get.responses.200.content.application/json.schema.properties.next.type</td>
-            <td>paths./users/.get.responses.200.content.application/json.schema.properties.previous.type</td>
-            <td>paths./users/.get.responses.200.content.application/json.schema.properties.results.type</td>
-            <td>paths./users/.get.responses.200.content.application/json.schema.properties.results.items.$ref</td>
-            <td>paths./users/.get.responses.401.description</td>
-            <td>paths./users/.get.security.0.jwt-token.0</td>
-            <td>paths./users/.post.tags.0</td>
-            <td>paths./users/.post.operationId</td>
-            <td>paths./users/.post.description</td>
-            <td>paths./users/.post.requestBody.content.application/json.schema.$ref</td>
-            <td>paths./users/.post.responses.201.description</td>
-            <td>paths./users/.post.responses.201.content.application/json.schema.$ref</td>
-            <td>paths./users/.post.responses.400.description</td>
-            <td>paths./users/.post.responses.400.content.application/json.schema.$ref</td>
-            <td>paths./users/.post.responses.401.description</td>
-            <td>paths./users/.post.responses.403.description</td>
-            <td>paths./users/.post.security.0.jwt-token.0</td>
-            <td>paths./users/{username}/.parameters.0.name</td>
-            <td>paths./users/{username}/.parameters.0.in</td>
-            <td>paths./users/{username}/.parameters.0.required</td>
-            <td>paths./users/{username}/.parameters.0.description</td>
-            <td>paths./users/{username}/.parameters.0.schema.type</td>
-            <td>paths./users/{username}/.get.tags.0</td>
-            <td>paths./users/{username}/.get.operationId</td>
-            <td>paths./users/{username}/.get.description</td>
-            <td>paths./users/{username}/.get.responses.200.description</td>
-            <td>paths./users/{username}/.get.responses.200.content.application/json.schema.$ref</td>
-            <td>paths./users/{username}/.get.responses.401.description</td>
-            <td>paths./users/{username}/.get.responses.403.description</td>
-            <td>paths./users/{username}/.get.responses.404.description</td>
-            <td>paths./users/{username}/.get.security.0.jwt-token.0</td>
-            <td>paths./users/{username}/.patch.tags.0</td>
-            <td>paths./users/{username}/.patch.operationId</td>
-            <td>paths./users/{username}/.patch.description</td>
-            <td>paths./users/{username}/.patch.requestBody.content.application/json.schema.$ref</td>
-            <td>paths./users/{username}/.patch.responses.200.description</td>
-            <td>paths./users/{username}/.patch.responses.200.content.application/json.schema.$ref</td>
-            <td>paths./users/{username}/.patch.responses.400.description</td>
-            <td>paths./users/{username}/.patch.responses.400.content.application/json.schema.$ref</td>
-            <td>paths./users/{username}/.patch.responses.401.description</td>
-            <td>paths./users/{username}/.patch.responses.403.description</td>
-            <td>paths./users/{username}/.patch.responses.404.description</td>
-            <td>paths./users/{username}/.patch.security.0.jwt-token.0</td>
-            <td>paths./users/{username}/.delete.tags.0</td>
-            <td>paths./users/{username}/.delete.operationId</td>
-            <td>paths./users/{username}/.delete.description</td>
-            <td>paths./users/{username}/.delete.responses.204.description</td>
-            <td>paths./users/{username}/.delete.responses.401.description</td>
-            <td>paths./users/{username}/.delete.responses.403.description</td>
-            <td>paths./users/{username}/.delete.responses.404.description</td>
-            <td>paths./users/{username}/.delete.security.0.jwt-token.0</td>
-            <td>paths./users/me/.get.tags.0</td>
-            <td>paths./users/me/.get.operationId</td>
-            <td>paths./users/me/.get.description</td>
-            <td>paths./users/me/.get.responses.200.description</td>
-            <td>paths./users/me/.get.responses.200.content.application/json.schema.$ref</td>
-            <td>paths./users/me/.get.security.0.jwt-token.0</td>
-            <td>paths./users/me/.patch.tags.0</td>
-            <td>paths./users/me/.patch.operationId</td>
-            <td>paths./users/me/.patch.description</td>
-            <td>paths./users/me/.patch.requestBody.content.application/json.schema.$ref</td>
-            <td>paths./users/me/.patch.responses.200.description</td>
-            <td>paths./users/me/.patch.responses.200.content.application/json.schema.$ref</td>
-            <td>paths./users/me/.patch.responses.400.description</td>
-            <td>paths./users/me/.patch.responses.400.content.application/json.schema.$ref</td>
-            <td>paths./users/me/.patch.security.0.jwt-token.0</td>
-            <td>components.schemas.User.title</td>
-            <td>components.schemas.User.type</td>
-            <td>components.schemas.User.description</td>
-            <td>components.schemas.User.required.0</td>
-            <td>components.schemas.User.required.1</td>
-            <td>components.schemas.User.properties.username.type</td>
-            <td>components.schemas.User.properties.username.description</td>
-            <td>components.schemas.User.properties.username.pattern</td>
-            <td>components.schemas.User.properties.username.maxLength</td>
-            <td>components.schemas.User.properties.email.type</td>
-            <td>components.schemas.User.properties.email.format</td>
-            <td>components.schemas.User.properties.email.maxLength</td>
-            <td>components.schemas.User.properties.first_name.type</td>
-            <td>components.schemas.User.properties.first_name.maxLength</td>
-            <td>components.schemas.User.properties.last_name.type</td>
-            <td>components.schemas.User.properties.last_name.maxLength</td>
-            <td>components.schemas.User.properties.bio.type</td>
-            <td>components.schemas.User.properties.role.type</td>
-            <td>components.schemas.User.properties.role.description</td>
-            <td>components.schemas.User.properties.role.enum.0</td>
-            <td>components.schemas.User.properties.role.enum.1</td>
-            <td>components.schemas.User.properties.role.enum.2</td>
-            <td>components.schemas.Title.title</td>
-            <td>components.schemas.Title.type</td>
-            <td>components.schemas.Title.properties.id.type</td>
-            <td>components.schemas.Title.properties.id.title</td>
-            <td>components.schemas.Title.properties.id.readOnly</td>
-            <td>components.schemas.Title.properties.name.type</td>
-            <td>components.schemas.Title.properties.name.title</td>
-            <td>components.schemas.Title.properties.year.type</td>
-            <td>components.schemas.Title.properties.year.title</td>
-            <td>components.schemas.Title.properties.rating.type</td>
-            <td>components.schemas.Title.properties.rating.readOnly</td>
-            <td>components.schemas.Title.properties.rating.title</td>
-            <td>components.schemas.Title.properties.description.type</td>
-            <td>components.schemas.Title.properties.description.title</td>
-            <td>components.schemas.Title.properties.genre.type</td>
-            <td>components.schemas.Title.properties.genre.items.$ref</td>
-            <td>components.schemas.Title.properties.category.$ref</td>
-            <td>components.schemas.TitleCreate.title</td>
-            <td>components.schemas.TitleCreate.type</td>
-            <td>components.schemas.TitleCreate.required.0</td>
-            <td>components.schemas.TitleCreate.required.1</td>
-            <td>components.schemas.TitleCreate.required.2</td>
-            <td>components.schemas.TitleCreate.required.3</td>
-            <td>components.schemas.TitleCreate.properties.name.type</td>
-            <td>components.schemas.TitleCreate.properties.name.title</td>
-            <td>components.schemas.TitleCreate.properties.name.maxLength</td>
-            <td>components.schemas.TitleCreate.properties.year.type</td>
-            <td>components.schemas.TitleCreate.properties.year.title</td>
-            <td>components.schemas.TitleCreate.properties.description.type</td>
-            <td>components.schemas.TitleCreate.properties.description.title</td>
-            <td>components.schemas.TitleCreate.properties.genre.type</td>
-            <td>components.schemas.TitleCreate.properties.genre.items.type</td>
-            <td>components.schemas.TitleCreate.properties.genre.items.title</td>
-            <td>components.schemas.TitleCreate.properties.category.type</td>
-            <td>components.schemas.TitleCreate.properties.category.title</td>
-            <td>components.schemas.Genre.type</td>
-            <td>components.schemas.Genre.properties.name.type</td>
-            <td>components.schemas.Genre.properties.name.maxLength</td>
-            <td>components.schemas.Genre.properties.slug.type</td>
-            <td>components.schemas.Genre.properties.slug.maxLength</td>
-            <td>components.schemas.Genre.properties.slug.pattern</td>
-            <td>components.schemas.Genre.required.0</td>
-            <td>components.schemas.Genre.required.1</td>
-            <td>components.schemas.GenreRead.type</td>
-            <td>components.schemas.GenreRead.properties.name.type</td>
-            <td>components.schemas.GenreRead.properties.slug.type</td>
-            <td>components.schemas.Review.title</td>
-            <td>components.schemas.Review.type</td>
-            <td>components.schemas.Review.description</td>
-            <td>components.schemas.Review.required.0</td>
-            <td>components.schemas.Review.required.1</td>
-            <td>components.schemas.Review.properties.id.type</td>
-            <td>components.schemas.Review.properties.id.title</td>
-            <td>components.schemas.Review.properties.id.readOnly</td>
-            <td>components.schemas.Review.properties.text.type</td>
-            <td>components.schemas.Review.properties.text.title</td>
-            <td>components.schemas.Review.properties.author.type</td>
-            <td>components.schemas.Review.properties.author.title</td>
-            <td>components.schemas.Review.properties.author.readOnly</td>
-            <td>components.schemas.Review.properties.score.type</td>
-            <td>components.schemas.Review.properties.score.title</td>
-            <td>components.schemas.Review.properties.score.minimum</td>
-            <td>components.schemas.Review.properties.score.maximum</td>
-            <td>components.schemas.Review.properties.pub_date.type</td>
-            <td>components.schemas.Review.properties.pub_date.format</td>
-            <td>components.schemas.Review.properties.pub_date.title</td>
-            <td>components.schemas.Review.properties.pub_date.readOnly</td>
-            <td>components.schemas.ValidationError.title</td>
-            <td>components.schemas.ValidationError.type</td>
-            <td>components.schemas.ValidationError.properties.field_name.type</td>
-            <td>components.schemas.ValidationError.properties.field_name.items.type</td>
-            <td>components.schemas.Token.title</td>
-            <td>components.schemas.Token.type</td>
-            <td>components.schemas.Token.properties.token.type</td>
-            <td>components.schemas.Token.properties.token.title</td>
-            <td>components.schemas.Comment.title</td>
-            <td>components.schemas.Comment.type</td>
-            <td>components.schemas.Comment.description</td>
-            <td>components.schemas.Comment.required.0</td>
-            <td>components.schemas.Comment.properties.id.type</td>
-            <td>components.schemas.Comment.properties.id.title</td>
-            <td>components.schemas.Comment.properties.id.readOnly</td>
-            <td>components.schemas.Comment.properties.text.type</td>
-            <td>components.schemas.Comment.properties.text.title</td>
-            <td>components.schemas.Comment.properties.author.type</td>
-            <td>components.schemas.Comment.properties.author.title</td>
-            <td>components.schemas.Comment.properties.author.readOnly</td>
-            <td>components.schemas.Comment.properties.pub_date.type</td>
-            <td>components.schemas.Comment.properties.pub_date.format</td>
-            <td>components.schemas.Comment.properties.pub_date.title</td>
-            <td>components.schemas.Comment.properties.pub_date.readOnly</td>
-            <td>components.schemas.Me.type</td>
-            <td>components.schemas.Me.properties.username.type</td>
-            <td>components.schemas.Me.properties.username.description</td>
-            <td>components.schemas.Me.properties.username.pattern</td>
-            <td>components.schemas.Me.properties.username.maxLength</td>
-            <td>components.schemas.Me.properties.role.enum.0</td>
-            <td>components.schemas.Me.properties.role.enum.1</td>
-            <td>components.schemas.Me.properties.role.enum.2</td>
-            <td>components.schemas.Me.properties.role.type</td>
-            <td>components.schemas.Me.properties.role.readOnly</td>
-            <td>components.schemas.Me.properties.email.type</td>
-            <td>components.schemas.Me.properties.email.format</td>
-            <td>components.schemas.Me.properties.email.maxLength</td>
-            <td>components.schemas.Me.properties.first_name.type</td>
-            <td>components.schemas.Me.properties.first_name.maxLength</td>
-            <td>components.schemas.Me.properties.last_name.type</td>
-            <td>components.schemas.Me.properties.last_name.maxLength</td>
-            <td>components.schemas.Me.properties.bio.type</td>
-            <td>components.schemas.Me.required.0</td>
-            <td>components.schemas.Me.required.1</td>
-            <td>components.schemas.Category.type</td>
-            <td>components.schemas.Category.properties.name.type</td>
-            <td>components.schemas.Category.properties.name.maxLength</td>
-            <td>components.schemas.Category.properties.slug.type</td>
-            <td>components.schemas.Category.properties.slug.maxLength</td>
-            <td>components.schemas.Category.properties.slug.pattern</td>
-            <td>components.schemas.Category.required.0</td>
-            <td>components.schemas.Category.required.1</td>
-            <td>components.schemas.CategoryRead.type</td>
-            <td>components.schemas.CategoryRead.properties.name.type</td>
-            <td>components.schemas.CategoryRead.properties.slug.type</td>
-            <td>components.securitySchemes.jwt-token.type</td>
-            <td>components.securitySchemes.jwt-token.description</td>
-            <td>components.securitySchemes.jwt-token.name</td>
-            <td>components.securitySchemes.jwt-token.in</td>
-        </tr>
-        <tr>
-            <td>3.0.2</td>
-            <td>YaMDb API</td>
-            <td></td>
-            <td>"запросы к API начинаются с `/api/v1/`</td>
-        </tr>
-        <tr>
-            <td># Описание</td>
-        </tr>
-        <tr>
-            <td>Проект **YaMDb** собирает отзывы пользователей на различные произведения.</td>
-        </tr>
-        <tr>
-            <td># Алгоритм регистрации пользователей</td>
-        </tr>
-        <tr>
-            <td>1. Пользователь отправляет POST-запрос на добавление нового пользователя с параметрами `email` и `username` на эндпоинт `/api/v1/auth/signup/`.</td>
-        </tr>
-        <tr>
-            <td>2. **YaMDB** отправляет письмо с кодом подтверждения (`confirmation_code`) на адрес `email`.</td>
-        </tr>
-        <tr>
-            <td>3. Пользователь отправляет POST-запрос с параметрами `username` и `confirmation_code` на эндпоинт `/api/v1/auth/token/`</td>
-            <td> в ответе на запрос ему приходит `token` (JWT-токен).</td>
-        </tr>
-        <tr>
-            <td>4. При желании пользователь отправляет PATCH-запрос на эндпоинт `/api/v1/users/me/` и заполняет поля в своём профайле (описание полей — в документации).</td>
-        </tr>
-        <tr>
-            <td># Пользовательские роли</td>
-        </tr>
-        <tr>
-            <td>- **Аноним** — может просматривать описания произведений</td>
-            <td> читать отзывы и комментарии.</td>
-        </tr>
-        <tr>
-            <td>- **Аутентифицированный пользователь** (`user`) — может</td>
-            <td> как и **Аноним**</td>
-            <td> читать всё</td>
-            <td> дополнительно он может публиковать отзывы и ставить оценку произведениям (фильмам/книгам/песенкам)</td>
-            <td> может комментировать чужие отзывы; может редактировать и удалять **свои** отзывы и комментарии. Эта роль присваивается по умолчанию каждому новому пользователю.</td>
-        </tr>
-        <tr>
-            <td>- **Модератор** (`moderator`) — те же права</td>
-            <td> что и у **Аутентифицированного пользователя** плюс право удалять **любые** отзывы и комментарии.</td>
-        </tr>
-        <tr>
-            <td>- **Администратор** (`admin`) — полные права на управление всем контентом проекта. Может создавать и удалять произведения</td>
-            <td> категории и жанры. Может назначать роли пользователям. </td>
-        </tr>
-        <tr>
-            <td>- **Суперюзер Django** — обладет правами администратора (`admin`)</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>/api/v1/</td>
-            <td>AUTH</td>
-            <td>Регистрация пользователей и выдача токенов</td>
-            <td>CATEGORIES</td>
-            <td>Категории (типы) произведений</td>
-            <td>GENRES</td>
-            <td>Категории жанров</td>
-            <td>TITLES</td>
-            <td>"Произведения</td>
-            <td> к которым пишут отзывы (определённый фильм</td>
-            <td> книга или песенка)."</td>
-            <td>REVIEWS</td>
-            <td>Отзывы</td>
-            <td>COMMENTS</td>
-            <td>Комментарии к отзывам</td>
-            <td>USERS</td>
-            <td>Пользователи</td>
-            <td>AUTH</td>
-            <td>Регистрация нового пользователя</td>
-            <td>"Получить код подтверждения на переданный `email`.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Доступно без токена.**</td>
-        </tr>
-        <tr>
-            <td>Использовать имя 'me' в качестве `username` запрещено.</td>
-        </tr>
-        <tr>
-            <td>Поля `email` и `username` должны быть уникальными.</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td></td>
-            <td>email</td>
-            <td>username</td>
-            <td>string</td>
-            <td>email</td>
-            <td>254</td>
-            <td>string</td>
-            <td>^[\w.@+-]+\z</td>
-            <td>150</td>
-            <td>string</td>
-            <td>string</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/ValidationError</td>
-            <td>Отсутствует обязательное поле или оно некорректно</td>
-            <td>AUTH</td>
-            <td>Получение JWT-токена</td>
-            <td>"Получение JWT-токена в обмен на username и confirmation code.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Доступно без токена.**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>username</td>
-            <td>confirmation_code</td>
-            <td>string</td>
-            <td>^[\w.@+-]+\z</td>
-            <td>150</td>
-            <td>string</td>
-            <td>true</td>
-            <td>#/components/schemas/Token</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/ValidationError</td>
-            <td>Отсутствует обязательное поле или оно некорректно</td>
-            <td>Пользователь не найден</td>
-            <td>CATEGORIES</td>
-            <td>Получение списка всех категорий</td>
-            <td>"Получить список всех категорий</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Доступно без токена**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>search</td>
-            <td>query</td>
-            <td>Поиск по названию категории</td>
-            <td>string</td>
-            <td>Удачное выполнение запроса</td>
-            <td>object</td>
-            <td>integer</td>
-            <td>string</td>
-            <td>string</td>
-            <td>array</td>
-            <td>#/components/schemas/Category</td>
-            <td>CATEGORIES</td>
-            <td>Добавление новой категории</td>
-            <td>"Создать категорию.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Администратор.**</td>
-        </tr>
-        <tr>
-            <td>Поле `slug` каждой категории должно быть уникальным.</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>#/components/schemas/Category</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/CategoryRead</td>
-            <td>Отсутствует обязательное поле или оно некорректно</td>
-            <td>#/components/schemas/ValidationError</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>write:admin</td>
-            <td>CATEGORIES</td>
-            <td>Удаление категории</td>
-            <td>"Удалить категорию.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Администратор.**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>slug</td>
-            <td>path</td>
-            <td>true</td>
-            <td>Slug категории</td>
-            <td>string</td>
-            <td>Удачное выполнение запроса</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>Категория не найдена</td>
-            <td>write:admin</td>
-            <td>GENRES</td>
-            <td>Получение списка всех жанров</td>
-            <td>"Получить список всех жанров.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Доступно без токена**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>search</td>
-            <td>query</td>
-            <td>Поиск по названию жанра</td>
-            <td>string</td>
-            <td>Удачное выполнение запроса</td>
-            <td>object</td>
-            <td>integer</td>
-            <td>string</td>
-            <td>string</td>
-            <td>array</td>
-            <td>#/components/schemas/Genre</td>
-            <td>GENRES</td>
-            <td>Добавление жанра</td>
-            <td>"Добавить жанр.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Администратор**.</td>
-        </tr>
-        <tr>
-            <td>Поле `slug` каждого жанра должно быть уникальным.</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>#/components/schemas/Genre</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/GenreRead</td>
-            <td>Отсутствует обязательное поле или оно некорректно</td>
-            <td>#/components/schemas/ValidationError</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>write:admin</td>
-            <td>GENRES</td>
-            <td>Удаление жанра</td>
-            <td>"Удалить жанр.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Администратор**.</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>slug</td>
-            <td>path</td>
-            <td>true</td>
-            <td>Slug жанра</td>
-            <td>string</td>
-            <td>Удачное выполнение запроса</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>Жанр не найден</td>
-            <td>write:admin</td>
-            <td>TITLES</td>
-            <td>Получение списка всех произведений</td>
-            <td>"Получить список всех объектов.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Доступно без токена**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>category</td>
-            <td>query</td>
-            <td>фильтрует по полю slug категории</td>
-            <td>string</td>
-            <td>genre</td>
-            <td>query</td>
-            <td>фильтрует по полю slug жанра</td>
-            <td>string</td>
-            <td>name</td>
-            <td>query</td>
-            <td>фильтрует по названию произведения</td>
-            <td>string</td>
-            <td>year</td>
-            <td>query</td>
-            <td>фильтрует по году</td>
-            <td>integer</td>
-            <td>Удачное выполнение запроса</td>
-            <td>object</td>
-            <td>integer</td>
-            <td>string</td>
-            <td>string</td>
-            <td>array</td>
-            <td>#/components/schemas/Title</td>
-            <td>TITLES</td>
-            <td>Добавление произведения</td>
-            <td>"Добавить новое произведение.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Администратор**.</td>
-        </tr>
-        <tr>
-            <td>Нельзя добавлять произведения</td>
-            <td> которые еще не вышли (год выпуска не может быть больше текущего).</td>
-        </tr>
-        <tr>
-            <td>При добавлении нового произведения требуется указать уже существующие категорию и жанр.</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td></td>
-            <td>#/components/schemas/TitleCreate</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/Title</td>
-            <td>Отсутствует обязательное поле или оно некорректно</td>
-            <td>#/components/schemas/ValidationError</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>write:admin</td>
-            <td>titles_id</td>
-            <td>path</td>
-            <td>true</td>
-            <td>ID объекта</td>
-            <td>integer</td>
-            <td>TITLES</td>
-            <td>Получение информации о произведении</td>
-            <td>"Информация о произведении</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Доступно без токена**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/Title</td>
-            <td>Объект не найден</td>
-            <td>TITLES</td>
-            <td>Частичное обновление информации о произведении</td>
-            <td>"Обновить информацию о произведении</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Администратор**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>#/components/schemas/TitleCreate</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/Title</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>Объект не найден</td>
-            <td>write:admin</td>
-            <td>TITLES</td>
-            <td>Удаление произведения</td>
-            <td>"Удалить произведение.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Администратор**.</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>Удачное выполнение запроса</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>Произведение не найдено</td>
-            <td>write:admin</td>
-            <td>title_id</td>
-            <td>path</td>
-            <td>true</td>
-            <td>ID произведения</td>
-            <td>integer</td>
-            <td>REVIEWS</td>
-            <td>Получение списка всех отзывов</td>
-            <td>"Получить список всех отзывов.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Доступно без токена**.</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>Удачное выполнение запроса</td>
-            <td>object</td>
-            <td>integer</td>
-            <td>string</td>
-            <td>string</td>
-            <td>array</td>
-            <td>#/components/schemas/Review</td>
-            <td>Произведение не найдено</td>
-            <td>REVIEWS</td>
-            <td>Добавление нового отзыва</td>
-            <td>"Добавить новый отзыв. Пользователь может оставить только один отзыв на произведение.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Аутентифицированные пользователи.**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>#/components/schemas/Review</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/Review</td>
-            <td>Отсутствует обязательное поле или оно некорректно</td>
-            <td>#/components/schemas/ValidationError</td>
-            <td>Необходим JWT-токен</td>
-            <td>Произведение не найдено</td>
-            <td>"write:user</td>
-            <td>moderator</td>
-            <td>admin"</td>
-            <td>title_id</td>
-            <td>path</td>
-            <td>true</td>
-            <td>ID произведения</td>
-            <td>integer</td>
-            <td>review_id</td>
-            <td>path</td>
-            <td>true</td>
-            <td>ID отзыва</td>
-            <td>integer</td>
-            <td>REVIEWS</td>
-            <td>Полуение отзыва по id</td>
-            <td>"Получить отзыв по id для указанного произведения.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Доступно без токена.**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/Review</td>
-            <td>Произведение или отзыв не найден</td>
-            <td>REVIEWS</td>
-            <td>Частичное обновление отзыва по id</td>
-            <td>"Частично обновить отзыв по id.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Автор отзыва</td>
-            <td> модератор или администратор.**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>#/components/schemas/Review</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/Review</td>
-            <td>Отсутствует обязательное поле или оно некорректно</td>
-            <td>#/components/schemas/ValidationError</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>Произведение не найдено</td>
-            <td>"write:user</td>
-            <td>moderator</td>
-            <td>admin"</td>
-            <td>REVIEWS</td>
-            <td>Удаление отзыва по id</td>
-            <td>"Удалить отзыв по id</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Автор отзыва</td>
-            <td> модератор или администратор.**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>Удачное выполнение запроса</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>Произведение или отзыв не найдены</td>
-            <td>"write:user</td>
-            <td>moderator</td>
-            <td>admin"</td>
-            <td>title_id</td>
-            <td>path</td>
-            <td>true</td>
-            <td>ID произведения</td>
-            <td>integer</td>
-            <td>review_id</td>
-            <td>path</td>
-            <td>true</td>
-            <td>ID отзыва</td>
-            <td>integer</td>
-            <td>COMMENTS</td>
-            <td>Получение списка всех комментариев к отзыву</td>
-            <td>"Получить список всех комментариев к отзыву по id</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Доступно без токена.**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>Удачное выполнение запроса</td>
-            <td>object</td>
-            <td>integer</td>
-            <td>string</td>
-            <td>string</td>
-            <td>array</td>
-            <td>#/components/schemas/Comment</td>
-            <td>Не найдено произведение или отзыв</td>
-            <td>COMMENTS</td>
-            <td>Добавление комментария к отзыву</td>
-            <td>"Добавить новый комментарий для отзыва.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Аутентифицированные пользователи.**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>#/components/schemas/Comment</td>
-            <td>#/components/schemas/Comment</td>
-            <td>Удачное выполнение запроса</td>
-            <td>Отсутствует обязательное поле или оно некорректно</td>
-            <td>#/components/schemas/ValidationError</td>
-            <td>Необходим JWT-токен</td>
-            <td>Не найдено произведение или отзыв</td>
-            <td>"write:user</td>
-            <td>moderator</td>
-            <td>admin"</td>
-            <td>title_id</td>
-            <td>path</td>
-            <td>true</td>
-            <td>ID произведения</td>
-            <td>integer</td>
-            <td>review_id</td>
-            <td>path</td>
-            <td>true</td>
-            <td>ID отзыва</td>
-            <td>integer</td>
-            <td>comment_id</td>
-            <td>path</td>
-            <td>true</td>
-            <td>ID комментария</td>
-            <td>integer</td>
-            <td>COMMENTS</td>
-            <td>Получение комментария к отзыву</td>
-            <td>"Получить комментарий для отзыва по id.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Доступно без токена.**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>#/components/schemas/Comment</td>
-            <td>Удачное выполнение запроса</td>
-            <td>"Не найдено произведение</td>
-            <td> отзыв или комментарий"</td>
-            <td>COMMENTS</td>
-            <td>Частичное обновление комментария к отзыву</td>
-            <td>"Частично обновить комментарий к отзыву по id.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Автор комментария</td>
-            <td> модератор или администратор**.</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>#/components/schemas/Comment</td>
-            <td>#/components/schemas/Comment</td>
-            <td>Удачное выполнение запроса</td>
-            <td>Отсутствует обязательное поле или оно некорректно</td>
-            <td>#/components/schemas/ValidationError</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>"Не найдено произведение</td>
-            <td> отзыв или комментарий"</td>
-            <td>"write:user</td>
-            <td>moderator</td>
-            <td>admin"</td>
-            <td>COMMENTS</td>
-            <td>Удаление комментария к отзыву</td>
-            <td>"Удалить комментарий к отзыву по id.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Автор комментария</td>
-            <td> модератор или администратор**.</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>Удачное выполнение запроса</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>"Не найдено произведение</td>
-            <td> отзыв или комментарий"</td>
-            <td>"write:user</td>
-            <td>moderator</td>
-            <td>admin"</td>
-            <td>USERS</td>
-            <td>Получение списка всех пользователей</td>
-            <td>"Получить список всех пользователей.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Администратор**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>search</td>
-            <td>query</td>
-            <td>Поиск по имени пользователя (username)</td>
-            <td>string</td>
-            <td>Удачное выполнение запроса</td>
-            <td>object</td>
-            <td>integer</td>
-            <td>string</td>
-            <td>string</td>
-            <td>array</td>
-            <td>#/components/schemas/User</td>
-            <td>Необходим JWT-токен</td>
-            <td>read:admin</td>
-            <td>USERS</td>
-            <td>Добавление пользователя</td>
-            <td>"Добавить нового пользователя.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Администратор**</td>
-        </tr>
-        <tr>
-            <td>Поля `email` и `username` должны быть уникальными.</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>#/components/schemas/User</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/User</td>
-            <td>Отсутствует обязательное поле или оно некорректно</td>
-            <td>#/components/schemas/ValidationError</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>write:admin</td>
-            <td>username</td>
-            <td>path</td>
-            <td>true</td>
-            <td>Username пользователя</td>
-            <td>string</td>
-            <td>USERS</td>
-            <td>Получение пользователя по username</td>
-            <td>"Получить пользователя по username.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Администратор**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/User</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>Пользователь не найден</td>
-            <td>read:admin</td>
-            <td>USERS</td>
-            <td>Изменение данных пользователя по username</td>
-            <td>"Изменить данные пользователя по username.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Администратор.**</td>
-        </tr>
-        <tr>
-            <td>Поля `email` и `username` должны быть уникальными.</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>#/components/schemas/User</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/User</td>
-            <td>Отсутствует обязательное поле или оно некорректно</td>
-            <td>#/components/schemas/ValidationError</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>Пользователь не найден</td>
-            <td>write:admin</td>
-            <td>USERS</td>
-            <td>Удаление пользователя по username</td>
-            <td>"Удалить пользователя по username.</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Администратор.**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>Удачное выполнение запроса</td>
-            <td>Необходим JWT-токен</td>
-            <td>Нет прав доступа</td>
-            <td>Пользователь не найден</td>
-            <td>write:admin</td>
-            <td>USERS</td>
-            <td>Получение данных своей учетной записи</td>
-            <td>"Получить данные своей учетной записи</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Любой авторизованный пользователь**</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/User</td>
-            <td>"read:admin</td>
-            <td>moderator</td>
-            <td>user"</td>
-            <td>USERS</td>
-            <td>Изменение данных своей учетной записи</td>
-            <td>"Изменить данные своей учетной записи</td>
-        </tr>
-        <tr>
-            <td>Права доступа: **Любой авторизованный пользователь**</td>
-        </tr>
-        <tr>
-            <td>Поля `email` и `username` должны быть уникальными.</td>
-        </tr>
-        <tr>
-            <td>"</td>
-            <td>#/components/schemas/Me</td>
-            <td>Удачное выполнение запроса</td>
-            <td>#/components/schemas/User</td>
-            <td>Отсутствует обязательное поле или оно некорректно</td>
-            <td>#/components/schemas/ValidationError</td>
-            <td>"write:admin</td>
-            <td>moderator</td>
-            <td>user"</td>
-            <td>Пользователь</td>
-            <td>object</td>
-            <td>Детальная информация о пользователе</td>
-            <td>username</td>
-            <td>email</td>
-            <td>string</td>
-            <td>"Required. 150 characters or fewer. Letters</td>
-            <td> digits and @/./+/-/_ only."</td>
-            <td>^[\w.@+-]+\z</td>
-            <td>150</td>
-            <td>string</td>
-            <td>email</td>
-            <td>254</td>
-            <td>string</td>
-            <td>150</td>
-            <td>string</td>
-            <td>150</td>
-            <td>string</td>
-            <td>string</td>
-            <td>"Администратор</td>
-            <td> модератор или пользователь. По умолчанию `user`."</td>
-            <td>user</td>
-            <td>moderator</td>
-            <td>admin</td>
-            <td>Объект</td>
-            <td>object</td>
-            <td>integer</td>
-            <td>ID произведения</td>
-            <td>true</td>
-            <td>string</td>
-            <td>Название</td>
-            <td>integer</td>
-            <td>Год выпуска</td>
-            <td>integer</td>
-            <td>true</td>
-            <td>"Рейтинг на основе отзывов</td>
-            <td> если отзывов нет — `None`"</td>
-            <td>string</td>
-            <td>Описание</td>
-            <td>array</td>
-            <td>#/components/schemas/Genre</td>
-            <td>#/components/schemas/Category</td>
-            <td>Объект для изменения</td>
-            <td>object</td>
-            <td>name</td>
-            <td>year</td>
-            <td>genre</td>
-            <td>category</td>
-            <td>string</td>
-            <td>Название</td>
-            <td>256</td>
-            <td>integer</td>
-            <td>Год выпуска</td>
-            <td>string</td>
-            <td>Описание</td>
-            <td>array</td>
-            <td>string</td>
-            <td>Slug жанра</td>
-            <td>string</td>
-            <td>Slug категории</td>
-            <td>object</td>
-            <td>string</td>
-            <td>256</td>
-            <td>string</td>
-            <td>50</td>
-            <td>^[-a-zA-Z0-9_]+$</td>
-            <td>name</td>
-            <td>slug</td>
-            <td>object</td>
-            <td>string</td>
-            <td>string</td>
-            <td>Отзыв</td>
-            <td>object</td>
-            <td>Детальная информация отзыва</td>
-            <td>text</td>
-            <td>score</td>
-            <td>integer</td>
-            <td>ID отзыва</td>
-            <td>true</td>
-            <td>string</td>
-            <td>Текст отзыва</td>
-            <td>string</td>
-            <td>username пользователя</td>
-            <td>true</td>
-            <td>integer</td>
-            <td>Оценка</td>
-            <td>1</td>
-            <td>10</td>
-            <td>string</td>
-            <td>date-time</td>
-            <td>Дата публикации отзыва</td>
-            <td>true</td>
-            <td>Ошибка валидации</td>
-            <td>object</td>
-            <td>array</td>
-            <td>string</td>
-            <td>Токен</td>
-            <td>object</td>
-            <td>string</td>
-            <td>access токен</td>
-            <td>Комментарий</td>
-            <td>object</td>
-            <td>Детальная информация комментария</td>
-            <td>text</td>
-            <td>integer</td>
-            <td>ID комментария</td>
-            <td>true</td>
-            <td>string</td>
-            <td>Текст комментария</td>
-            <td>string</td>
-            <td>username автора комментария</td>
-            <td>true</td>
-            <td>string</td>
-            <td>date-time</td>
-            <td>Дата публикации комментария</td>
-            <td>true</td>
-            <td>object</td>
-            <td>string</td>
-            <td>"Required. 150 characters or fewer. Letters</td>
-            <td> digits and @/./+/-/_ only."</td>
-            <td>^[\w.@+-]+\z</td>
-            <td>150</td>
-            <td>admin</td>
-            <td>moderator</td>
-            <td>user</td>
-            <td>string</td>
-            <td>true</td>
-            <td>string</td>
-            <td>email</td>
-            <td>254</td>
-            <td>string</td>
-            <td>150</td>
-            <td>string</td>
-            <td>150</td>
-            <td>string</td>
-            <td>username</td>
-            <td>email</td>
-            <td>object</td>
-            <td>string</td>
-            <td>256</td>
-            <td>string</td>
-            <td>50</td>
-            <td>^[-a-zA-Z0-9_]+$</td>
-            <td>name</td>
-            <td>slug</td>
-            <td>object</td>
-            <td>string</td>
-            <td>string</td>
-            <td>apiKey</td>
-            <td>Используется аутентификация с использованием JWT-токенов</td>
-            <td>Bearer</td>
-            <td>header</td>
-        </tr>
-        <tr>
-            <td></td>
-        </tr>
-    </table>
-</body>
+  <h3>Table of Contents </h3>
+  <div class="method-summary"></div>
+  <h4><a href="#AUTH">AUTH</a></h4>
+  <ul>
+  <li><a href="#получение JWTТокена"><code><span class="http-method">post</span> /auth/token/</code></a></li>
+  <li><a href="#регистрация нового пользователя"><code><span class="http-method">post</span> /auth/signup/</code></a></li>
+  </ul>
+  <h4><a href="#CATEGORIES">CATEGORIES</a></h4>
+  <ul>
+  <li><a href="#добавление новой категории"><code><span class="http-method">post</span> /categories/</code></a></li>
+  <li><a href="#получение списка всех категорий"><code><span class="http-method">get</span> /categories/</code></a></li>
+  <li><a href="#удаление категории"><code><span class="http-method">delete</span> /categories/{slug}/</code></a></li>
+  </ul>
+  <h4><a href="#COMMENTS">COMMENTS</a></h4>
+  <ul>
+  <li><a href="#добавление комментария к отзыву"><code><span class="http-method">post</span> /titles/{title_id}/reviews/{review_id}/comments/</code></a></li>
+  <li><a href="#получение комментария к отзыву"><code><span class="http-method">get</span> /titles/{title_id}/reviews/{review_id}/comments/{comment_id}/</code></a></li>
+  <li><a href="#получение списка всех комментариев к отзыву"><code><span class="http-method">get</span> /titles/{title_id}/reviews/{review_id}/comments/</code></a></li>
+  <li><a href="#удаление комментария к отзыву"><code><span class="http-method">delete</span> /titles/{title_id}/reviews/{review_id}/comments/{comment_id}/</code></a></li>
+  <li><a href="#частичное обновление комментария к отзыву"><code><span class="http-method">patch</span> /titles/{title_id}/reviews/{review_id}/comments/{comment_id}/</code></a></li>
+  </ul>
+  <h4><a href="#GENRES">GENRES</a></h4>
+  <ul>
+  <li><a href="#добавление жанра"><code><span class="http-method">post</span> /genres/</code></a></li>
+  <li><a href="#получение списка всех жанров"><code><span class="http-method">get</span> /genres/</code></a></li>
+  <li><a href="#удаление жанра"><code><span class="http-method">delete</span> /genres/{slug}/</code></a></li>
+  </ul>
+  <h4><a href="#REVIEWS">REVIEWS</a></h4>
+  <ul>
+  <li><a href="#добавление нового отзыва"><code><span class="http-method">post</span> /titles/{title_id}/reviews/</code></a></li>
+  <li><a href="#полуение отзыва по id"><code><span class="http-method">get</span> /titles/{title_id}/reviews/{review_id}/</code></a></li>
+  <li><a href="#получение списка всех отзывов"><code><span class="http-method">get</span> /titles/{title_id}/reviews/</code></a></li>
+  <li><a href="#удаление отзыва по id"><code><span class="http-method">delete</span> /titles/{title_id}/reviews/{review_id}/</code></a></li>
+  <li><a href="#частичное обновление отзыва по id"><code><span class="http-method">patch</span> /titles/{title_id}/reviews/{review_id}/</code></a></li>
+  </ul>
+  <h4><a href="#TITLES">TITLES</a></h4>
+  <ul>
+  <li><a href="#добавление произведения"><code><span class="http-method">post</span> /titles/</code></a></li>
+  <li><a href="#получение информации о произведении"><code><span class="http-method">get</span> /titles/{titles_id}/</code></a></li>
+  <li><a href="#получение списка всех произведений"><code><span class="http-method">get</span> /titles/</code></a></li>
+  <li><a href="#удаление произведения"><code><span class="http-method">delete</span> /titles/{titles_id}/</code></a></li>
+  <li><a href="#частичное обновление информации о произведении"><code><span class="http-method">patch</span> /titles/{titles_id}/</code></a></li>
+  </ul>
+  <h4><a href="#USERS">USERS</a></h4>
+  <ul>
+  <li><a href="#добавление пользователя"><code><span class="http-method">post</span> /users/</code></a></li>
+  <li><a href="#изменение данных пользователя по username"><code><span class="http-method">patch</span> /users/{username}/</code></a></li>
+  <li><a href="#изменение данных своей учетной записи"><code><span class="http-method">patch</span> /users/me/</code></a></li>
+  <li><a href="#получение данных своей учетной записи"><code><span class="http-method">get</span> /users/me/</code></a></li>
+  <li><a href="#получение пользователя по username"><code><span class="http-method">get</span> /users/{username}/</code></a></li>
+  <li><a href="#получение списка всех пользователей"><code><span class="http-method">get</span> /users/</code></a></li>
+  <li><a href="#удаление пользователя по username"><code><span class="http-method">delete</span> /users/{username}/</code></a></li>
+  </ul>
 
+  <h1><a name="AUTH">AUTH</a></h1>
+  <div class="method"><a name="получение JWTТокена"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="post"><code class="huge"><span class="http-method">post</span> /auth/token/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">получение JWTТокена</span>)</div>
+    <div class="method-notes">Получение JWT-токена в обмен на username и confirmation code.
+Права доступа: <strong>Доступно без токена.</strong></div>
+
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#auth_token_body">auth_token_body</a> (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash;  </div>
+                </div>  <!-- field-items -->
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#Token">Token</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "token" : "token"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#Token">Token</a>
+    <h4 class="field-label">400</h4>
+    Отсутствует обязательное поле или оно некорректно
+        <a href="#ValidationError">ValidationError</a>
+    <h4 class="field-label">404</h4>
+    Пользователь не найден
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="регистрация нового пользователя"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="post"><code class="huge"><span class="http-method">post</span> /auth/signup/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">регистрация нового пользователя</span>)</div>
+    <div class="method-notes">Получить код подтверждения на переданный <code>email</code>.
+Права доступа: <strong>Доступно без токена.</strong>
+Использовать имя 'me' в качестве <code>username</code> запрещено.
+Поля <code>email</code> и <code>username</code> должны быть уникальными.</div>
+
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#auth_signup_body">auth_signup_body</a> (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash;  </div>
+                </div>  <!-- field-items -->
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#inline_response_200">inline_response_200</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "email" : "email",
+  "username" : "username"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#inline_response_200">inline_response_200</a>
+    <h4 class="field-label">400</h4>
+    Отсутствует обязательное поле или оно некорректно
+        <a href="#ValidationError">ValidationError</a>
+  </div> <!-- method -->
+  <hr/>
+  <h1><a name="CATEGORIES">CATEGORIES</a></h1>
+  <div class="method"><a name="добавление новой категории"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="post"><code class="huge"><span class="http-method">post</span> /categories/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">добавление новой категории</span>)</div>
+    <div class="method-notes">Создать категорию.
+Права доступа: <strong>Администратор.</strong>
+Поле <code>slug</code> каждой категории должно быть уникальным.</div>
+
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#Category">Category</a> (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash;  </div>
+                </div>  <!-- field-items -->
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#CategoryRead">CategoryRead</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "name" : "name",
+  "slug" : "slug"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">201</h4>
+    Удачное выполнение запроса
+        <a href="#CategoryRead">CategoryRead</a>
+    <h4 class="field-label">400</h4>
+    Отсутствует обязательное поле или оно некорректно
+        <a href="#ValidationError">ValidationError</a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="получение списка всех категорий"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /categories/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">получение списка всех категорий</span>)</div>
+    <div class="method-notes">Получить список всех категорий
+Права доступа: <strong>Доступно без токена</strong></div>
+
+
+
+
+
+    <h3 class="field-label">Query parameters</h3>
+    <div class="field-items">
+      <div class="param">search (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; Поиск по названию категории </div>    </div>  <!-- field-items -->
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#inline_response_200_1">inline_response_200_1</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "next" : "next",
+  "previous" : "previous",
+  "count" : 0,
+  "results" : [ {
+    "name" : "name",
+    "slug" : "slug"
+  }, {
+    "name" : "name",
+    "slug" : "slug"
+  } ]
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#inline_response_200_1">inline_response_200_1</a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="удаление категории"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="delete"><code class="huge"><span class="http-method">delete</span> /categories/{slug}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">удаление категории</span>)</div>
+    <div class="method-notes">Удалить категорию.
+Права доступа: <strong>Администратор.</strong></div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">slug (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; Slug категории </div>    </div>  <!-- field-items -->
+
+
+
+
+
+
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">204</h4>
+    Удачное выполнение запроса
+        <a href="#"></a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+    <h4 class="field-label">404</h4>
+    Категория не найдена
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <h1><a name="COMMENTS">COMMENTS</a></h1>
+  <div class="method"><a name="добавление комментария к отзыву"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="post"><code class="huge"><span class="http-method">post</span> /titles/{title_id}/reviews/{review_id}/comments/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">добавление комментария к отзыву</span>)</div>
+    <div class="method-notes">Добавить новый комментарий для отзыва.
+Права доступа: <strong>Аутентифицированные пользователи.</strong></div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">title_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID произведения </div>      <div class="param">review_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID отзыва </div>    </div>  <!-- field-items -->
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#Comment">Comment</a> (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash;  </div>
+                </div>  <!-- field-items -->
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#Comment">Comment</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "pub_date" : "2000-01-23T04:56:07.000+00:00",
+  "author" : "author",
+  "id" : 6,
+  "text" : "text"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">201</h4>
+    Удачное выполнение запроса
+        <a href="#Comment">Comment</a>
+    <h4 class="field-label">400</h4>
+    Отсутствует обязательное поле или оно некорректно
+        <a href="#ValidationError">ValidationError</a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">404</h4>
+    Не найдено произведение или отзыв
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="получение комментария к отзыву"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /titles/{title_id}/reviews/{review_id}/comments/{comment_id}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">получение комментария к отзыву</span>)</div>
+    <div class="method-notes">Получить комментарий для отзыва по id.
+Права доступа: <strong>Доступно без токена.</strong></div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">title_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID произведения </div>      <div class="param">review_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID отзыва </div>      <div class="param">comment_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID комментария </div>    </div>  <!-- field-items -->
+
+
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#Comment">Comment</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "pub_date" : "2000-01-23T04:56:07.000+00:00",
+  "author" : "author",
+  "id" : 6,
+  "text" : "text"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#Comment">Comment</a>
+    <h4 class="field-label">404</h4>
+    Не найдено произведение, отзыв или комментарий
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="получение списка всех комментариев к отзыву"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /titles/{title_id}/reviews/{review_id}/comments/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">получение списка всех комментариев к отзыву</span>)</div>
+    <div class="method-notes">Получить список всех комментариев к отзыву по id
+Права доступа: <strong>Доступно без токена.</strong></div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">title_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID произведения </div>      <div class="param">review_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID отзыва </div>    </div>  <!-- field-items -->
+
+
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#inline_response_200_5">inline_response_200_5</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "next" : "next",
+  "previous" : "previous",
+  "count" : 0,
+  "results" : [ {
+    "pub_date" : "2000-01-23T04:56:07.000+00:00",
+    "author" : "author",
+    "id" : 6,
+    "text" : "text"
+  }, {
+    "pub_date" : "2000-01-23T04:56:07.000+00:00",
+    "author" : "author",
+    "id" : 6,
+    "text" : "text"
+  } ]
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#inline_response_200_5">inline_response_200_5</a>
+    <h4 class="field-label">404</h4>
+    Не найдено произведение или отзыв
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="удаление комментария к отзыву"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="delete"><code class="huge"><span class="http-method">delete</span> /titles/{title_id}/reviews/{review_id}/comments/{comment_id}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">удаление комментария к отзыву</span>)</div>
+    <div class="method-notes">Удалить комментарий к отзыву по id.
+Права доступа: <strong>Автор комментария, модератор или администратор</strong>.</div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">title_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID произведения </div>      <div class="param">review_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID отзыва </div>      <div class="param">comment_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID комментария </div>    </div>  <!-- field-items -->
+
+
+
+
+
+
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">204</h4>
+    Удачное выполнение запроса
+        <a href="#"></a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+    <h4 class="field-label">404</h4>
+    Не найдено произведение, отзыв или комментарий
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="частичное обновление комментария к отзыву"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="patch"><code class="huge"><span class="http-method">patch</span> /titles/{title_id}/reviews/{review_id}/comments/{comment_id}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">частичное обновление комментария к отзыву</span>)</div>
+    <div class="method-notes">Частично обновить комментарий к отзыву по id.
+Права доступа: <strong>Автор комментария, модератор или администратор</strong>.</div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">title_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID произведения </div>      <div class="param">review_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID отзыва </div>      <div class="param">comment_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID комментария </div>    </div>  <!-- field-items -->
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#Comment">Comment</a> (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash;  </div>
+                </div>  <!-- field-items -->
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#Comment">Comment</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "pub_date" : "2000-01-23T04:56:07.000+00:00",
+  "author" : "author",
+  "id" : 6,
+  "text" : "text"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#Comment">Comment</a>
+    <h4 class="field-label">400</h4>
+    Отсутствует обязательное поле или оно некорректно
+        <a href="#ValidationError">ValidationError</a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+    <h4 class="field-label">404</h4>
+    Не найдено произведение, отзыв или комментарий
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <h1><a name="GENRES">GENRES</a></h1>
+  <div class="method"><a name="добавление жанра"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="post"><code class="huge"><span class="http-method">post</span> /genres/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">добавление жанра</span>)</div>
+    <div class="method-notes">Добавить жанр.
+Права доступа: <strong>Администратор</strong>.
+Поле <code>slug</code> каждого жанра должно быть уникальным.</div>
+
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#Genre">Genre</a> (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash;  </div>
+                </div>  <!-- field-items -->
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#GenreRead">GenreRead</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "name" : "name",
+  "slug" : "slug"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">201</h4>
+    Удачное выполнение запроса
+        <a href="#GenreRead">GenreRead</a>
+    <h4 class="field-label">400</h4>
+    Отсутствует обязательное поле или оно некорректно
+        <a href="#ValidationError">ValidationError</a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="получение списка всех жанров"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /genres/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">получение списка всех жанров</span>)</div>
+    <div class="method-notes">Получить список всех жанров.
+Права доступа: <strong>Доступно без токена</strong></div>
+
+
+
+
+
+    <h3 class="field-label">Query parameters</h3>
+    <div class="field-items">
+      <div class="param">search (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; Поиск по названию жанра </div>    </div>  <!-- field-items -->
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#inline_response_200_2">inline_response_200_2</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "next" : "next",
+  "previous" : "previous",
+  "count" : 0,
+  "results" : [ {
+    "name" : "name",
+    "slug" : "slug"
+  }, {
+    "name" : "name",
+    "slug" : "slug"
+  } ]
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#inline_response_200_2">inline_response_200_2</a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="удаление жанра"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="delete"><code class="huge"><span class="http-method">delete</span> /genres/{slug}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">удаление жанра</span>)</div>
+    <div class="method-notes">Удалить жанр.
+Права доступа: <strong>Администратор</strong>.</div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">slug (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; Slug жанра </div>    </div>  <!-- field-items -->
+
+
+
+
+
+
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">204</h4>
+    Удачное выполнение запроса
+        <a href="#"></a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+    <h4 class="field-label">404</h4>
+    Жанр не найден
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <h1><a name="REVIEWS">REVIEWS</a></h1>
+  <div class="method"><a name="добавление нового отзыва"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="post"><code class="huge"><span class="http-method">post</span> /titles/{title_id}/reviews/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">добавление нового отзыва</span>)</div>
+    <div class="method-notes">Добавить новый отзыв. Пользователь может оставить только один отзыв на произведение.
+Права доступа: <strong>Аутентифицированные пользователи.</strong></div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">title_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID произведения </div>    </div>  <!-- field-items -->
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#Review">Review</a> (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash;  </div>
+                </div>  <!-- field-items -->
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#Review">Review</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "score" : 2,
+  "pub_date" : "2000-01-23T04:56:07.000+00:00",
+  "author" : "author",
+  "id" : 6,
+  "text" : "text"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">201</h4>
+    Удачное выполнение запроса
+        <a href="#Review">Review</a>
+    <h4 class="field-label">400</h4>
+    Отсутствует обязательное поле или оно некорректно
+        <a href="#ValidationError">ValidationError</a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">404</h4>
+    Произведение не найдено
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="полуение отзыва по id"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /titles/{title_id}/reviews/{review_id}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">полуение отзыва по id</span>)</div>
+    <div class="method-notes">Получить отзыв по id для указанного произведения.
+Права доступа: <strong>Доступно без токена.</strong></div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">title_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID произведения </div>      <div class="param">review_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID отзыва </div>    </div>  <!-- field-items -->
+
+
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#Review">Review</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "score" : 2,
+  "pub_date" : "2000-01-23T04:56:07.000+00:00",
+  "author" : "author",
+  "id" : 6,
+  "text" : "text"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#Review">Review</a>
+    <h4 class="field-label">404</h4>
+    Произведение или отзыв не найден
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="получение списка всех отзывов"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /titles/{title_id}/reviews/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">получение списка всех отзывов</span>)</div>
+    <div class="method-notes">Получить список всех отзывов.
+Права доступа: <strong>Доступно без токена</strong>.</div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">title_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID произведения </div>    </div>  <!-- field-items -->
+
+
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#inline_response_200_4">inline_response_200_4</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "next" : "next",
+  "previous" : "previous",
+  "count" : 0,
+  "results" : [ {
+    "score" : 2,
+    "pub_date" : "2000-01-23T04:56:07.000+00:00",
+    "author" : "author",
+    "id" : 6,
+    "text" : "text"
+  }, {
+    "score" : 2,
+    "pub_date" : "2000-01-23T04:56:07.000+00:00",
+    "author" : "author",
+    "id" : 6,
+    "text" : "text"
+  } ]
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#inline_response_200_4">inline_response_200_4</a>
+    <h4 class="field-label">404</h4>
+    Произведение не найдено
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="удаление отзыва по id"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="delete"><code class="huge"><span class="http-method">delete</span> /titles/{title_id}/reviews/{review_id}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">удаление отзыва по id</span>)</div>
+    <div class="method-notes">Удалить отзыв по id
+Права доступа: <strong>Автор отзыва, модератор или администратор.</strong></div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">title_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID произведения </div>      <div class="param">review_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID отзыва </div>    </div>  <!-- field-items -->
+
+
+
+
+
+
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">204</h4>
+    Удачное выполнение запроса
+        <a href="#"></a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+    <h4 class="field-label">404</h4>
+    Произведение или отзыв не найдены
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="частичное обновление отзыва по id"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="patch"><code class="huge"><span class="http-method">patch</span> /titles/{title_id}/reviews/{review_id}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">частичное обновление отзыва по id</span>)</div>
+    <div class="method-notes">Частично обновить отзыв по id.
+Права доступа: <strong>Автор отзыва, модератор или администратор.</strong></div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">title_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID произведения </div>      <div class="param">review_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID отзыва </div>    </div>  <!-- field-items -->
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#Review">Review</a> (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash;  </div>
+                </div>  <!-- field-items -->
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#Review">Review</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "score" : 2,
+  "pub_date" : "2000-01-23T04:56:07.000+00:00",
+  "author" : "author",
+  "id" : 6,
+  "text" : "text"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#Review">Review</a>
+    <h4 class="field-label">400</h4>
+    Отсутствует обязательное поле или оно некорректно
+        <a href="#ValidationError">ValidationError</a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+    <h4 class="field-label">404</h4>
+    Произведение не найдено
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <h1><a name="TITLES">TITLES</a></h1>
+  <div class="method"><a name="добавление произведения"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="post"><code class="huge"><span class="http-method">post</span> /titles/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">добавление произведения</span>)</div>
+    <div class="method-notes">Добавить новое произведение.
+Права доступа: <strong>Администратор</strong>.
+Нельзя добавлять произведения, которые еще не вышли (год выпуска не может быть больше текущего).
+При добавлении нового произведения требуется указать уже существующие категорию и жанр.</div>
+
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#TitleCreate">TitleCreate</a> (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash;  </div>
+                </div>  <!-- field-items -->
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#Title">Title</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "year" : 1,
+  "name" : "name",
+  "rating" : 5,
+  "genre" : [ {
+    "name" : "name",
+    "slug" : "slug"
+  }, {
+    "name" : "name",
+    "slug" : "slug"
+  } ],
+  "description" : "description",
+  "id" : 6,
+  "category" : {
+    "name" : "name",
+    "slug" : "slug"
+  }
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">201</h4>
+    Удачное выполнение запроса
+        <a href="#Title">Title</a>
+    <h4 class="field-label">400</h4>
+    Отсутствует обязательное поле или оно некорректно
+        <a href="#ValidationError">ValidationError</a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="получение информации о произведении"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /titles/{titles_id}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">получение информации о произведении</span>)</div>
+    <div class="method-notes">Информация о произведении
+Права доступа: <strong>Доступно без токена</strong></div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">titles_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID объекта </div>    </div>  <!-- field-items -->
+
+
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#Title">Title</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "year" : 1,
+  "name" : "name",
+  "rating" : 5,
+  "genre" : [ {
+    "name" : "name",
+    "slug" : "slug"
+  }, {
+    "name" : "name",
+    "slug" : "slug"
+  } ],
+  "description" : "description",
+  "id" : 6,
+  "category" : {
+    "name" : "name",
+    "slug" : "slug"
+  }
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#Title">Title</a>
+    <h4 class="field-label">404</h4>
+    Объект не найден
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="получение списка всех произведений"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /titles/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">получение списка всех произведений</span>)</div>
+    <div class="method-notes">Получить список всех объектов.
+Права доступа: <strong>Доступно без токена</strong></div>
+
+
+
+
+
+    <h3 class="field-label">Query parameters</h3>
+    <div class="field-items">
+      <div class="param">category (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; фильтрует по полю slug категории </div>      <div class="param">genre (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; фильтрует по полю slug жанра </div>      <div class="param">name (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; фильтрует по названию произведения </div>      <div class="param">year (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; фильтрует по году </div>    </div>  <!-- field-items -->
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#inline_response_200_3">inline_response_200_3</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "next" : "next",
+  "previous" : "previous",
+  "count" : 0,
+  "results" : [ {
+    "year" : 1,
+    "name" : "name",
+    "rating" : 5,
+    "genre" : [ {
+      "name" : "name",
+      "slug" : "slug"
+    }, {
+      "name" : "name",
+      "slug" : "slug"
+    } ],
+    "description" : "description",
+    "id" : 6,
+    "category" : {
+      "name" : "name",
+      "slug" : "slug"
+    }
+  }, {
+    "year" : 1,
+    "name" : "name",
+    "rating" : 5,
+    "genre" : [ {
+      "name" : "name",
+      "slug" : "slug"
+    }, {
+      "name" : "name",
+      "slug" : "slug"
+    } ],
+    "description" : "description",
+    "id" : 6,
+    "category" : {
+      "name" : "name",
+      "slug" : "slug"
+    }
+  } ]
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#inline_response_200_3">inline_response_200_3</a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="удаление произведения"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="delete"><code class="huge"><span class="http-method">delete</span> /titles/{titles_id}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">удаление произведения</span>)</div>
+    <div class="method-notes">Удалить произведение.
+Права доступа: <strong>Администратор</strong>.</div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">titles_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID объекта </div>    </div>  <!-- field-items -->
+
+
+
+
+
+
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">204</h4>
+    Удачное выполнение запроса
+        <a href="#"></a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+    <h4 class="field-label">404</h4>
+    Произведение не найдено
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="частичное обновление информации о произведении"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="patch"><code class="huge"><span class="http-method">patch</span> /titles/{titles_id}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">частичное обновление информации о произведении</span>)</div>
+    <div class="method-notes">Обновить информацию о произведении
+Права доступа: <strong>Администратор</strong></div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">titles_id (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; ID объекта </div>    </div>  <!-- field-items -->
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#TitleCreate">TitleCreate</a> (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash;  </div>
+                </div>  <!-- field-items -->
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#Title">Title</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "year" : 1,
+  "name" : "name",
+  "rating" : 5,
+  "genre" : [ {
+    "name" : "name",
+    "slug" : "slug"
+  }, {
+    "name" : "name",
+    "slug" : "slug"
+  } ],
+  "description" : "description",
+  "id" : 6,
+  "category" : {
+    "name" : "name",
+    "slug" : "slug"
+  }
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#Title">Title</a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+    <h4 class="field-label">404</h4>
+    Объект не найден
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <h1><a name="USERS">USERS</a></h1>
+  <div class="method"><a name="добавление пользователя"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="post"><code class="huge"><span class="http-method">post</span> /users/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">добавление пользователя</span>)</div>
+    <div class="method-notes">Добавить нового пользователя.
+Права доступа: <strong>Администратор</strong>
+Поля <code>email</code> и <code>username</code> должны быть уникальными.</div>
+
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#User">User</a> (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash;  </div>
+                </div>  <!-- field-items -->
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#User">User</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "role" : "user",
+  "last_name" : "last_name",
+  "bio" : "bio",
+  "first_name" : "first_name",
+  "email" : "",
+  "username" : "username"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">201</h4>
+    Удачное выполнение запроса
+        <a href="#User">User</a>
+    <h4 class="field-label">400</h4>
+    Отсутствует обязательное поле или оно некорректно
+        <a href="#ValidationError">ValidationError</a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="изменение данных пользователя по username"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="patch"><code class="huge"><span class="http-method">patch</span> /users/{username}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">изменение данных пользователя по username</span>)</div>
+    <div class="method-notes">Изменить данные пользователя по username.
+Права доступа: <strong>Администратор.</strong>
+Поля <code>email</code> и <code>username</code> должны быть уникальными.</div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">username (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; Username пользователя </div>    </div>  <!-- field-items -->
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#User">User</a> (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash;  </div>
+                </div>  <!-- field-items -->
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#User">User</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "role" : "user",
+  "last_name" : "last_name",
+  "bio" : "bio",
+  "first_name" : "first_name",
+  "email" : "",
+  "username" : "username"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#User">User</a>
+    <h4 class="field-label">400</h4>
+    Отсутствует обязательное поле или оно некорректно
+        <a href="#ValidationError">ValidationError</a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+    <h4 class="field-label">404</h4>
+    Пользователь не найден
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="изменение данных своей учетной записи"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="patch"><code class="huge"><span class="http-method">patch</span> /users/me/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">изменение данных своей учетной записи</span>)</div>
+    <div class="method-notes">Изменить данные своей учетной записи
+Права доступа: <strong>Любой авторизованный пользователь</strong>
+Поля <code>email</code> и <code>username</code> должны быть уникальными.</div>
+
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#Me">Me</a> (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash;  </div>
+                </div>  <!-- field-items -->
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#User">User</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "role" : "user",
+  "last_name" : "last_name",
+  "bio" : "bio",
+  "first_name" : "first_name",
+  "email" : "",
+  "username" : "username"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#User">User</a>
+    <h4 class="field-label">400</h4>
+    Отсутствует обязательное поле или оно некорректно
+        <a href="#ValidationError">ValidationError</a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="получение данных своей учетной записи"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /users/me/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">получение данных своей учетной записи</span>)</div>
+    <div class="method-notes">Получить данные своей учетной записи
+Права доступа: <strong>Любой авторизованный пользователь</strong></div>
+
+
+
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#User">User</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "role" : "user",
+  "last_name" : "last_name",
+  "bio" : "bio",
+  "first_name" : "first_name",
+  "email" : "",
+  "username" : "username"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#User">User</a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="получение пользователя по username"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /users/{username}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">получение пользователя по username</span>)</div>
+    <div class="method-notes">Получить пользователя по username.
+Права доступа: <strong>Администратор</strong></div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">username (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; Username пользователя </div>    </div>  <!-- field-items -->
+
+
+
+
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#User">User</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "role" : "user",
+  "last_name" : "last_name",
+  "bio" : "bio",
+  "first_name" : "first_name",
+  "email" : "",
+  "username" : "username"
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#User">User</a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+    <h4 class="field-label">404</h4>
+    Пользователь не найден
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="получение списка всех пользователей"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /users/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">получение списка всех пользователей</span>)</div>
+    <div class="method-notes">Получить список всех пользователей.
+Права доступа: <strong>Администратор</strong></div>
+
+
+
+
+
+    <h3 class="field-label">Query parameters</h3>
+    <div class="field-items">
+      <div class="param">search (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; Поиск по имени пользователя (username) </div>    </div>  <!-- field-items -->
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      <a href="#inline_response_200_6">inline_response_200_6</a>
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>{
+  "next" : "next",
+  "previous" : "previous",
+  "count" : 0,
+  "results" : [ {
+    "role" : "user",
+    "last_name" : "last_name",
+    "bio" : "bio",
+    "first_name" : "first_name",
+    "email" : "",
+    "username" : "username"
+  }, {
+    "role" : "user",
+    "last_name" : "last_name",
+    "bio" : "bio",
+    "first_name" : "first_name",
+    "email" : "",
+    "username" : "username"
+  } ]
+}</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Удачное выполнение запроса
+        <a href="#inline_response_200_6">inline_response_200_6</a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="удаление пользователя по username"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="delete"><code class="huge"><span class="http-method">delete</span> /users/{username}/</code></pre></div>
+    <div class="method-summary"> (<span class="nickname">удаление пользователя по username</span>)</div>
+    <div class="method-notes">Удалить пользователя по username.
+Права доступа: <strong>Администратор.</strong></div>
+
+    <h3 class="field-label">Path parameters</h3>
+    <div class="field-items">
+      <div class="param">username (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Path Parameter</span> &mdash; Username пользователя </div>    </div>  <!-- field-items -->
+
+
+
+
+
+
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">204</h4>
+    Удачное выполнение запроса
+        <a href="#"></a>
+    <h4 class="field-label">401</h4>
+    Необходим JWT-токен
+        <a href="#"></a>
+    <h4 class="field-label">403</h4>
+    Нет прав доступа
+        <a href="#"></a>
+    <h4 class="field-label">404</h4>
+    Пользователь не найден
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+
+  <h2><a name="__Models">Models</a></h2>
+  [ Jump to <a href="#__Methods">Methods</a> ]
+
+  <h3>Table of Contents</h3>
+  <ol>
+    <li><a href="#Category"><code>Category</code></a></li>
+    <li><a href="#CategoryRead"><code>CategoryRead</code></a></li>
+    <li><a href="#Comment"><code>Comment</code> - Комментарий</a></li>
+    <li><a href="#Genre"><code>Genre</code></a></li>
+    <li><a href="#GenreRead"><code>GenreRead</code></a></li>
+    <li><a href="#Me"><code>Me</code></a></li>
+    <li><a href="#Review"><code>Review</code> - Отзыв</a></li>
+    <li><a href="#Title"><code>Title</code> - Объект</a></li>
+    <li><a href="#TitleCreate"><code>TitleCreate</code> - Объект для изменения</a></li>
+    <li><a href="#Token"><code>Token</code> - Токен</a></li>
+    <li><a href="#User"><code>User</code> - Пользователь</a></li>
+    <li><a href="#ValidationError"><code>ValidationError</code> - Ошибка валидации</a></li>
+    <li><a href="#auth_signup_body"><code>auth_signup_body</code></a></li>
+    <li><a href="#auth_token_body"><code>auth_token_body</code></a></li>
+    <li><a href="#inline_response_200"><code>inline_response_200</code></a></li>
+    <li><a href="#inline_response_200_1"><code>inline_response_200_1</code></a></li>
+    <li><a href="#inline_response_200_2"><code>inline_response_200_2</code></a></li>
+    <li><a href="#inline_response_200_3"><code>inline_response_200_3</code></a></li>
+    <li><a href="#inline_response_200_4"><code>inline_response_200_4</code></a></li>
+    <li><a href="#inline_response_200_5"><code>inline_response_200_5</code></a></li>
+    <li><a href="#inline_response_200_6"><code>inline_response_200_6</code></a></li>
+  </ol>
+
+  <div class="model">
+    <h3><a name="Category"><code>Category</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">name </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">slug </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="CategoryRead"><code>CategoryRead</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">name (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">slug (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="Comment"><code>Comment</code> - Комментарий</a> <a class="up" href="#__Models">Up</a></h3>
+    <div class='model-description'>Детальная информация комментария</div>
+    <div class="field-items">
+      <div class="param">id (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span>  </div>
+<div class="param">text </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">author (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">pub_date (optional)</div><div class="param-desc"><span class="param-type"><a href="#DateTime">Date</a></span>  format: date-time</div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="Genre"><code>Genre</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">name </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">slug </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="GenreRead"><code>GenreRead</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">name (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">slug (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="Me"><code>Me</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">username </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span> Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. </div>
+<div class="param">role (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+        <div class="param-enum-header">Enum:</div>
+        <div class="param-enum">admin</div><div class="param-enum">moderator</div><div class="param-enum">user</div>
+<div class="param">email </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  format: email</div>
+<div class="param">first_name (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">last_name (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">bio (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="Review"><code>Review</code> - Отзыв</a> <a class="up" href="#__Models">Up</a></h3>
+    <div class='model-description'>Детальная информация отзыва</div>
+    <div class="field-items">
+      <div class="param">id (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span>  </div>
+<div class="param">text </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">author (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">score </div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span>  </div>
+<div class="param">pub_date (optional)</div><div class="param-desc"><span class="param-type"><a href="#DateTime">Date</a></span>  format: date-time</div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="Title"><code>Title</code> - Объект</a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">id (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span>  </div>
+<div class="param">name (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">year (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span>  </div>
+<div class="param">rating (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span>  </div>
+<div class="param">description (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">genre (optional)</div><div class="param-desc"><span class="param-type"><a href="#Genre">array[Genre]</a></span>  </div>
+<div class="param">category (optional)</div><div class="param-desc"><span class="param-type"><a href="#Category">Category</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="TitleCreate"><code>TitleCreate</code> - Объект для изменения</a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">name </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">year </div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span>  </div>
+<div class="param">description (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">genre </div><div class="param-desc"><span class="param-type"><a href="#string">array[String]</a></span>  </div>
+<div class="param">category </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="Token"><code>Token</code> - Токен</a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">token (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="User"><code>User</code> - Пользователь</a> <a class="up" href="#__Models">Up</a></h3>
+    <div class='model-description'>Детальная информация о пользователе</div>
+    <div class="field-items">
+      <div class="param">username </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span> Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only. </div>
+<div class="param">email </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  format: email</div>
+<div class="param">first_name (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">last_name (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">bio (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">role (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span> Администратор, модератор или пользователь. По умолчанию &lt;code&gt;user&lt;/code&gt;. </div>
+        <div class="param-enum-header">Enum:</div>
+        <div class="param-enum">user</div><div class="param-enum">moderator</div><div class="param-enum">admin</div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="ValidationError"><code>ValidationError</code> - Ошибка валидации</a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">field_name (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">array[String]</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="auth_signup_body"><code>auth_signup_body</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">email </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  format: email</div>
+<div class="param">username </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="auth_token_body"><code>auth_token_body</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">username </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">confirmation_code </div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="inline_response_200"><code>inline_response_200</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">email (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">username (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="inline_response_200_1"><code>inline_response_200_1</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">count (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span>  </div>
+<div class="param">next (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">previous (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">results (optional)</div><div class="param-desc"><span class="param-type"><a href="#Category">array[Category]</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="inline_response_200_2"><code>inline_response_200_2</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">count (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span>  </div>
+<div class="param">next (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">previous (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">results (optional)</div><div class="param-desc"><span class="param-type"><a href="#Genre">array[Genre]</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="inline_response_200_3"><code>inline_response_200_3</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">count (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span>  </div>
+<div class="param">next (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">previous (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">results (optional)</div><div class="param-desc"><span class="param-type"><a href="#Title">array[Title]</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="inline_response_200_4"><code>inline_response_200_4</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">count (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span>  </div>
+<div class="param">next (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">previous (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">results (optional)</div><div class="param-desc"><span class="param-type"><a href="#Review">array[Review]</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="inline_response_200_5"><code>inline_response_200_5</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">count (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span>  </div>
+<div class="param">next (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">previous (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">results (optional)</div><div class="param-desc"><span class="param-type"><a href="#Comment">array[Comment]</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  <div class="model">
+    <h3><a name="inline_response_200_6"><code>inline_response_200_6</code></a> <a class="up" href="#__Models">Up</a></h3>
+    
+    <div class="field-items">
+      <div class="param">count (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span>  </div>
+<div class="param">next (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">previous (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span>  </div>
+<div class="param">results (optional)</div><div class="param-desc"><span class="param-type"><a href="#User">array[User]</a></span>  </div>
+    </div>  <!-- field-items -->
+  </div>
+  </body>
 </html>
