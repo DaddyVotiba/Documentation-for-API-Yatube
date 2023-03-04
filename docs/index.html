@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <link rel="stylesheet" type="text/css" href="assets/css/bootstrap.css" media="screen">
+  <link rel="stylesheet" type="text/css" href="assets/css/bootstrap-responsive.css" media="screen">
+  <link rel="stylesheet" type="text/css" href="assets/css/style.css">
+  <script src="assets/js/jquery-1.8.3.min.js" type="text/javascript"></script>
+  <script src="assets/js/main.js" type="text/javascript"></script>
+
+  <title>REST API Resources</title>
+</head>
+<body>
+  <div class="header">
+    <div class="top-bar">
+      <h1 id="logo"><a class="logo" href="/"><span>Swagger</span><span class="light">API Docs</span></a></h1>
+    </div>
+  </div>
+  <div class="model-container"></div>
+  <div class="content">
+    <div class="box clearfix">
+      <div class="sidebar">
+        <div class="section-box">
+          <div class="section-header">
+            Overview
+          </div>
+          <ul>
+            <li>Getting Started</li>
+          </ul>
+        </div>
+        <div class="section-box">
+          <div class="section-header">
+            <a href="#!/AUTHApi">AUTHApi</a>
+          </div>
+          <ul>
+            <li><a href="#!/AUTHApi#получение JWTТокена">получение JWTТокена</a></li>
+            <li><a href="#!/AUTHApi#регистрация нового пользователя">регистрация нового пользователя</a></li>
+          </ul>
+        </div>
+        <div class="section-box">
+          <div class="section-header">
+            <a href="#!/CATEGORIESApi">CATEGORIESApi</a>
+          </div>
+          <ul>
+            <li><a href="#!/CATEGORIESApi#добавление новой категории">добавление новой категории</a></li>
+            <li><a href="#!/CATEGORIESApi#получение списка всех категорий">получение списка всех категорий</a></li>
+            <li><a href="#!/CATEGORIESApi#удаление категории">удаление категории</a></li>
+          </ul>
+        </div>
+        <div class="section-box">
+          <div class="section-header">
+            <a href="#!/COMMENTSApi">COMMENTSApi</a>
+          </div>
+          <ul>
+            <li><a href="#!/COMMENTSApi#добавление комментария к отзыву">добавление комментария к отзыву</a></li>
+            <li><a href="#!/COMMENTSApi#получение комментария к отзыву">получение комментария к отзыву</a></li>
+            <li><a href="#!/COMMENTSApi#получение списка всех комментариев к отзыву">получение списка всех комментариев к отзыву</a></li>
+            <li><a href="#!/COMMENTSApi#удаление комментария к отзыву">удаление комментария к отзыву</a></li>
+            <li><a href="#!/COMMENTSApi#частичное обновление комментария к отзыву">частичное обновление комментария к отзыву</a></li>
+          </ul>
+        </div>
+        <div class="section-box">
+          <div class="section-header">
+            <a href="#!/GENRESApi">GENRESApi</a>
+          </div>
+          <ul>
+            <li><a href="#!/GENRESApi#добавление жанра">добавление жанра</a></li>
+            <li><a href="#!/GENRESApi#получение списка всех жанров">получение списка всех жанров</a></li>
+            <li><a href="#!/GENRESApi#удаление жанра">удаление жанра</a></li>
+          </ul>
+        </div>
+        <div class="section-box">
+          <div class="section-header">
+            <a href="#!/REVIEWSApi">REVIEWSApi</a>
+          </div>
+          <ul>
+            <li><a href="#!/REVIEWSApi#добавление нового отзыва">добавление нового отзыва</a></li>
+            <li><a href="#!/REVIEWSApi#полуение отзыва по id">полуение отзыва по id</a></li>
+            <li><a href="#!/REVIEWSApi#получение списка всех отзывов">получение списка всех отзывов</a></li>
+            <li><a href="#!/REVIEWSApi#удаление отзыва по id">удаление отзыва по id</a></li>
+            <li><a href="#!/REVIEWSApi#частичное обновление отзыва по id">частичное обновление отзыва по id</a></li>
+          </ul>
+        </div>
+        <div class="section-box">
+          <div class="section-header">
+            <a href="#!/TITLESApi">TITLESApi</a>
+          </div>
+          <ul>
+            <li><a href="#!/TITLESApi#добавление произведения">добавление произведения</a></li>
+            <li><a href="#!/TITLESApi#получение информации о произведении">получение информации о произведении</a></li>
+            <li><a href="#!/TITLESApi#получение списка всех произведений">получение списка всех произведений</a></li>
+            <li><a href="#!/TITLESApi#удаление произведения">удаление произведения</a></li>
+            <li><a href="#!/TITLESApi#частичное обновление информации о произведении">частичное обновление информации о произведении</a></li>
+          </ul>
+        </div>
+        <div class="section-box">
+          <div class="section-header">
+            <a href="#!/USERSApi">USERSApi</a>
+          </div>
+          <ul>
+            <li><a href="#!/USERSApi#добавление пользователя">добавление пользователя</a></li>
+            <li><a href="#!/USERSApi#изменение данных пользователя по username">изменение данных пользователя по username</a></li>
+            <li><a href="#!/USERSApi#изменение данных своей учетной записи">изменение данных своей учетной записи</a></li>
+            <li><a href="#!/USERSApi#получение данных своей учетной записи">получение данных своей учетной записи</a></li>
+            <li><a href="#!/USERSApi#получение пользователя по username">получение пользователя по username</a></li>
+            <li><a href="#!/USERSApi#получение списка всех пользователей">получение списка всех пользователей</a></li>
+            <li><a href="#!/USERSApi#удаление пользователя по username">удаление пользователя по username</a></li>
+          </ul>
+        </div>
+      </div>
+    <div class="non-sidebar">
+      <div class="main-content">
+        <h2>Getting Started</h2>
+        <p>To begin using your fancy HTTP API, follow the steps below.</p>
+        <p>You can add some helpful tips, here</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
